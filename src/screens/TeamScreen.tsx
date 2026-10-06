@@ -24,11 +24,11 @@ export const TeamScreen: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-12 select-none">
       {/* 1. HEADER & CONTROLS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 shadow-sm">
         <div>
           <h1 className="text-base sm:text-lg font-black text-slate-100 tracking-tight flex items-center gap-2">
             <span>Staff & Access Management</span>
-            <span className="text-xs font-mono font-normal text-emerald-400 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+            <span className="text-xs font-mono font-normal text-emerald-400 px-2 py-0.5 bg-slate-800 border border-slate-700">
               {allProfiles.length} Members
             </span>
           </h1>
@@ -40,7 +40,7 @@ export const TeamScreen: React.FC = () => {
         <button
           type="button"
           onClick={openInviteModal}
-          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-95 min-h-[44px]"
+          className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-95 min-h-[44px]"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Invite New Staff</span>
@@ -54,7 +54,7 @@ export const TeamScreen: React.FC = () => {
           return (
             <div
               key={profile.id}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-sm"
+              className="bg-slate-900 border border-slate-800 p-4 flex flex-col justify-between shadow-sm"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -73,7 +73,7 @@ export const TeamScreen: React.FC = () => {
                   </div>
 
                   <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono border ${
+                    className={`px-2 py-0.5 text-[10px] font-black uppercase font-mono border ${
                       profile.role === 'admin'
                         ? 'bg-purple-950 text-purple-300 border-purple-800'
                         : profile.role === 'landlord'
@@ -85,7 +85,7 @@ export const TeamScreen: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="my-3 text-xs bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80 flex flex-col gap-1.5">
+                <div className="my-3 text-xs bg-slate-950/50 p-2.5 border border-slate-800/80 flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-[11px]">
                     <span className="text-slate-400">Account Status:</span>
                     <span className="font-bold text-emerald-400 uppercase text-[10px]">

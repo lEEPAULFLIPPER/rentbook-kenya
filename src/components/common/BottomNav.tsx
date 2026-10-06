@@ -25,7 +25,7 @@ export const BottomNav: React.FC = () => {
       <button
         type="button"
         onClick={() => setCurrentScreen('dashboard')}
-        className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] min-h-[44px] min-w-[44px] transition ${
+        className={`flex flex-col items-center justify-center py-1 px-2 text-[10px] min-h-[44px] min-w-[44px] transition ${
           currentScreen === 'dashboard' ? 'text-emerald-400 font-bold' : 'text-slate-400'
         }`}
       >
@@ -37,7 +37,7 @@ export const BottomNav: React.FC = () => {
         <button
           type="button"
           onClick={() => setCurrentScreen('cashbook')}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] min-h-[44px] min-w-[44px] transition ${
+          className={`flex flex-col items-center justify-center py-1 px-2 text-[10px] min-h-[44px] min-w-[44px] transition ${
             currentScreen === 'cashbook' ? 'text-emerald-400 font-bold' : 'text-slate-400'
           }`}
         >
@@ -50,7 +50,7 @@ export const BottomNav: React.FC = () => {
       <button
         type="button"
         onClick={() => openPaymentModal()}
-        className="flex flex-col items-center justify-center -mt-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full p-2.5 shadow-lg border-2 border-slate-900 active:scale-95 transition min-h-[48px] min-w-[48px]"
+        className="flex flex-col items-center justify-center -mt-4 bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 shadow-lg border-2 border-slate-900 active:scale-95 transition min-h-[48px] min-w-[48px]"
         title="Record payment"
       >
         <Plus className="w-6 h-6 stroke-[3]" />
@@ -59,7 +59,7 @@ export const BottomNav: React.FC = () => {
       <button
         type="button"
         onClick={() => setCurrentScreen('units')}
-        className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] min-h-[44px] min-w-[44px] transition ${
+        className={`flex flex-col items-center justify-center py-1 px-2 text-[10px] min-h-[44px] min-w-[44px] transition ${
           currentScreen === 'units' ? 'text-emerald-400 font-bold' : 'text-slate-400'
         }`}
       >
@@ -70,7 +70,7 @@ export const BottomNav: React.FC = () => {
       <button
         type="button"
         onClick={() => setCurrentScreen('tenants')}
-        className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] min-h-[44px] min-w-[44px] transition ${
+        className={`flex flex-col items-center justify-center py-1 px-2 text-[10px] min-h-[44px] min-w-[44px] transition ${
           currentScreen === 'tenants' ? 'text-emerald-400 font-bold' : 'text-slate-400'
         }`}
       >
@@ -81,7 +81,7 @@ export const BottomNav: React.FC = () => {
       <button
         type="button"
         onClick={() => setCurrentScreen('debts')}
-        className={`flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] min-h-[44px] min-w-[44px] transition ${
+        className={`flex flex-col items-center justify-center py-1 px-2 text-[10px] min-h-[44px] min-w-[44px] transition ${
           currentScreen === 'debts' ? 'text-emerald-400 font-bold' : 'text-slate-400'
         }`}
       >

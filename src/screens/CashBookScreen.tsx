@@ -75,11 +75,11 @@ export const CashBookScreen: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-12 select-none">
       {/* 1. HEADER & CONTROLS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3.5 sm:p-4 print:hidden">
         <div>
           <h1 className="text-base sm:text-lg font-black text-slate-100 tracking-tight flex items-center gap-2">
             <span>Cash Book Ledger</span>
-            <span className="text-xs font-mono font-normal text-emerald-400 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+            <span className="text-xs font-mono font-normal text-emerald-400 px-2 py-0.5 bg-slate-800 border border-slate-700">
               {currentProperty?.name}
             </span>
           </h1>
@@ -91,7 +91,7 @@ export const CashBookScreen: React.FC = () => {
         <button
           type="button"
           onClick={handlePrint}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95 shrink-0 min-h-[40px]"
+          className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95 shrink-0 min-h-[40px]"
         >
           <Printer className="w-4 h-4 text-slate-300" />
           <span>Print / Save PDF</span>
@@ -99,7 +99,7 @@ export const CashBookScreen: React.FC = () => {
       </div>
 
       {/* 2. SUMMARY RIBBON (TOTAL IN / OUT / RUNNING NET) */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 bg-slate-900 border border-slate-800 p-3 sm:p-4">
         <div>
           <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase">
             Total Money In
@@ -129,7 +129,7 @@ export const CashBookScreen: React.FC = () => {
       </div>
 
       {/* 3. FILTERS & SEARCH */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 print:hidden">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 bg-slate-900/60 border border-slate-800 p-2.5 print:hidden">
         <div className="relative w-full sm:w-72">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -137,7 +137,7 @@ export const CashBookScreen: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search reference, tenant, house..."
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[38px]"
+            className="w-full bg-slate-800 border border-slate-700 pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[38px]"
           />
         </div>
 
@@ -146,7 +146,7 @@ export const CashBookScreen: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as 'all' | PaymentStatus)}
-            className="bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none min-h-[38px] flex-1 sm:flex-initial"
+            className="bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none min-h-[38px] flex-1 sm:flex-initial"
           >
             <option value="all">All Statuses</option>
             <option value="approved">Approved Only</option>
@@ -159,7 +159,7 @@ export const CashBookScreen: React.FC = () => {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as 'all' | 'in' | 'out')}
-            className="bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none min-h-[38px] flex-1 sm:flex-initial"
+            className="bg-slate-800 border border-slate-700 px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none min-h-[38px] flex-1 sm:flex-initial"
           >
             <option value="all">Money In & Out</option>
             <option value="in">Money In Only</option>
@@ -169,7 +169,7 @@ export const CashBookScreen: React.FC = () => {
       </div>
 
       {/* 4. DESKTOP WIDE DATA TABLE (STICKY HEADER, COMPACT PADDING FOR 1366x768) */}
-      <div className="hidden md:block bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="hidden md:block bg-slate-900 border border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto max-h-[620px]">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-slate-800 text-slate-300 font-bold sticky top-0 z-10 border-b border-slate-700 shadow-sm">
@@ -242,7 +242,7 @@ export const CashBookScreen: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => approvePayment(item.id)}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow-sm active:scale-95"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow-sm active:scale-95"
                             title="Verify and Approve"
                           >
                             Approve
@@ -250,7 +250,7 @@ export const CashBookScreen: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleRejectPrompt(item.id)}
-                            className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-rose-900/60 text-rose-300 font-semibold text-[11px] border border-slate-700 transition"
+                            className="px-2 py-1 bg-slate-800 hover:bg-rose-900/60 text-rose-300 font-semibold text-[11px] border border-slate-700 transition"
                             title="Reject Entry"
                           >
                             Reject
@@ -258,7 +258,7 @@ export const CashBookScreen: React.FC = () => {
                         </div>
                       ) : (
                         <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
+                          className={`inline-block px-2 py-0.5 text-[10px] font-bold uppercase font-mono ${
                             item.status === 'approved'
                               ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800'
                               : item.status === 'pending'
@@ -285,7 +285,7 @@ export const CashBookScreen: React.FC = () => {
           return (
             <div
               key={item.id}
-              className={`bg-slate-900 border rounded-xl p-3 flex flex-col gap-2 text-xs ${
+              className={`bg-slate-900 border p-3 flex flex-col gap-2 text-xs ${
                 isPending ? 'border-amber-600/60 bg-amber-950/15' : 'border-slate-800'
               }`}
             >
@@ -312,7 +312,7 @@ export const CashBookScreen: React.FC = () => {
                     Bal: {item.status === 'approved' ? formatKES(item.balance) : 'Pending'}
                   </span>
                   <span
-                    className={`px-1.5 py-0.2 rounded text-[9px] uppercase font-bold ${
+                    className={`px-1.5 py-0.2 text-[9px] uppercase font-bold ${
                       item.status === 'approved'
                         ? 'bg-emerald-950 text-emerald-300'
                         : 'bg-amber-950 text-amber-300'
@@ -329,14 +329,14 @@ export const CashBookScreen: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => approvePayment(item.id)}
-                    className="flex-1 py-2 rounded-lg bg-emerald-600 text-white font-bold text-xs text-center"
+                    className="flex-1 py-2 bg-emerald-600 text-white font-bold text-xs text-center"
                   >
                     Approve Entry
                   </button>
                   <button
                     type="button"
                     onClick={() => handleRejectPrompt(item.id)}
-                    className="px-3 py-2 rounded-lg bg-slate-800 text-rose-300 text-xs font-semibold"
+                    className="px-3 py-2 bg-slate-800 text-rose-300 text-xs font-semibold"
                   >
                     Reject
                   </button>

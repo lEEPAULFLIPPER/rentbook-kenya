@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+@theme {
+  --radius: 0px;
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
+  --radius-full: 0px;
+}
+
+/* STRICT SHARP EDGES ENFORCEMENT ACROSS ALL ELEMENTS */
+*,
+*::before,
+*::after {
+  border-radius: 0px !important;
+}
+
 @layer base {
   html {
     color-scheme: dark;
@@ -19,10 +39,10 @@
   }
 }
 
-/* Custom scrollbars for compact Chromebook views */
+/* Custom sharp scrollbars for compact Chromebook views */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -31,7 +51,7 @@
 
 ::-webkit-scrollbar-thumb {
   background: #334155;
-  border-radius: 9999px;
+  border-radius: 0px !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {

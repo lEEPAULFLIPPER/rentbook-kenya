@@ -94,11 +94,11 @@ export const ReportsScreen: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-12 select-none">
       {/* 1. HEADER & CONTROLS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 shadow-sm print:hidden">
         <div>
           <h1 className="text-base sm:text-lg font-black text-slate-100 tracking-tight flex items-center gap-2">
             <span>Landlord Financial Reports</span>
-            <span className="text-xs font-mono font-normal text-emerald-400 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+            <span className="text-xs font-mono font-normal text-emerald-400 px-2 py-0.5 bg-slate-800 border border-slate-700">
               {currentProperty?.name}
             </span>
           </h1>
@@ -111,7 +111,7 @@ export const ReportsScreen: React.FC = () => {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow transition active:scale-95 min-h-[40px]"
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow transition active:scale-95 min-h-[40px]"
           >
             <Download className="w-4 h-4" />
             <span>Export CSV</span>
@@ -119,7 +119,7 @@ export const ReportsScreen: React.FC = () => {
           <button
             type="button"
             onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition min-h-[40px]"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition min-h-[40px]"
           >
             <Printer className="w-4 h-4" />
             <span>Print</span>
@@ -128,11 +128,11 @@ export const ReportsScreen: React.FC = () => {
       </div>
 
       {/* 2. REPORT TYPE TABS */}
-      <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 rounded-xl p-2 print:hidden">
+      <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-800 p-2 print:hidden">
         <button
           type="button"
           onClick={() => setActiveTab('collection')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition min-h-[40px] ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold transition min-h-[40px] ${
             activeTab === 'collection'
               ? 'bg-emerald-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-white'
@@ -144,7 +144,7 @@ export const ReportsScreen: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('rentroll')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition min-h-[40px] ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold transition min-h-[40px] ${
             activeTab === 'rentroll'
               ? 'bg-emerald-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-white'
@@ -156,7 +156,7 @@ export const ReportsScreen: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('expenses')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition min-h-[40px] ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold transition min-h-[40px] ${
             activeTab === 'expenses'
               ? 'bg-emerald-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-white'
@@ -171,14 +171,14 @@ export const ReportsScreen: React.FC = () => {
       {activeTab === 'collection' && (
         <div className="flex flex-col gap-3">
           {/* Month Selector & Summary */}
-          <div className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-4">
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400 font-semibold">Select Month:</span>
               <input
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 font-mono"
+                className="bg-slate-800 border border-slate-700 px-3 py-1.5 text-xs text-slate-100 font-mono"
               />
             </div>
             <div className="flex items-center gap-4 text-xs">
@@ -194,7 +194,7 @@ export const ReportsScreen: React.FC = () => {
           </div>
 
           {/* Collection Table */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-slate-900 border border-slate-800 overflow-hidden shadow-sm">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-slate-800 text-slate-300 font-bold border-b border-slate-700">
                 <tr>
@@ -226,7 +226,7 @@ export const ReportsScreen: React.FC = () => {
                     </td>
                     <td className="px-3 py-2.5 text-center">
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
+                        className={`px-2 py-0.5 text-[10px] font-bold uppercase font-mono ${
                           row.isFullyPaid
                             ? 'bg-emerald-950 text-emerald-300'
                             : 'bg-rose-950 text-rose-300'
@@ -244,7 +244,7 @@ export const ReportsScreen: React.FC = () => {
       )}
 
       {activeTab === 'rentroll' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-slate-900 border border-slate-800 overflow-hidden shadow-sm">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-slate-800 text-slate-300 font-bold border-b border-slate-700">
               <tr>
@@ -288,7 +288,7 @@ export const ReportsScreen: React.FC = () => {
       )}
 
       {activeTab === 'expenses' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-slate-900 border border-slate-800 overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-800 flex items-center justify-between">
             <span className="font-bold text-xs text-slate-200 uppercase">Expense Summary</span>
             <span className="text-sm font-black text-rose-400">

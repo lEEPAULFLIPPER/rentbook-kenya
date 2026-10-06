@@ -79,7 +79,7 @@ export const AddExpenseModal: React.FC = () => {
           <select
             value={propertyId}
             onChange={(e) => setPropertyId(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
             required
           >
             {visibleProperties.map((p) => (
@@ -105,7 +105,7 @@ export const AddExpenseModal: React.FC = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-14 pr-4 py-2.5 text-base sm:text-lg font-black text-rose-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[48px]"
+              className="w-full bg-slate-800 border border-slate-700 pl-14 pr-4 py-2.5 text-base sm:text-lg font-black text-rose-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[48px]"
               required
             />
           </div>
@@ -118,7 +118,7 @@ export const AddExpenseModal: React.FC = () => {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+              className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>
@@ -134,7 +134,7 @@ export const AddExpenseModal: React.FC = () => {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+              className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
               required
             />
           </div>
@@ -150,7 +150,7 @@ export const AddExpenseModal: React.FC = () => {
             value={payee}
             onChange={(e) => setPayee(e.target.value)}
             placeholder="e.g. Fundi Moses, Nairobi Water, KPLC Tokens, CleanCity"
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
             required
           />
         </div>
@@ -158,7 +158,7 @@ export const AddExpenseModal: React.FC = () => {
         {/* Optional Receipt Attachment */}
         <div>
           <label className="block text-slate-300 font-semibold mb-1">Receipt Attachment</label>
-          <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700/60 cursor-pointer min-h-[44px] text-slate-300">
+          <label className="flex items-center gap-2 px-3 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700/60 cursor-pointer min-h-[44px] text-slate-300">
             <Camera className="w-4 h-4 text-amber-400 shrink-0" />
             <span className="truncate">
               {receiptPhotoName ? receiptPhotoName : 'Snap / attach receipt photo'}
@@ -184,7 +184,7 @@ export const AddExpenseModal: React.FC = () => {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="e.g. Replaced leaking PVC pipe behind House B3"
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full bg-slate-800 border border-slate-700 p-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
 
@@ -193,14 +193,14 @@ export const AddExpenseModal: React.FC = () => {
           <button
             type="button"
             onClick={closeExpenseModal}
-            className="px-4 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
+            className="px-4 py-2.5 text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
+            className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
           >
             {isSubmitting ? 'Saving...' : 'Save Expense'}
           </button>

@@ -137,7 +137,7 @@ export const RecordPaymentModal: React.FC = () => {
           <select
             value={selectedUnitId}
             onChange={(e) => setSelectedUnitId(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
             required
           >
             <option value="" disabled>
@@ -158,7 +158,7 @@ export const RecordPaymentModal: React.FC = () => {
 
         {/* Tenant Details Banner */}
         {activeTenant && (
-          <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3 flex items-center justify-between">
+          <div className="bg-slate-800/60 border border-slate-700/60 p-3 flex items-center justify-between">
             <div>
               <div className="text-[11px] text-slate-400">Current Tenant</div>
               <div className="text-xs font-bold text-slate-100">{activeTenant.full_name}</div>
@@ -194,7 +194,7 @@ export const RecordPaymentModal: React.FC = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-14 pr-4 py-2.5 text-base sm:text-lg font-black text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[48px]"
+              className="w-full bg-slate-800 border border-slate-700 pl-14 pr-4 py-2.5 text-base sm:text-lg font-black text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[48px]"
               required
             />
           </div>
@@ -209,7 +209,7 @@ export const RecordPaymentModal: React.FC = () => {
                 key={m}
                 type="button"
                 onClick={() => setMethod(m)}
-                className={`py-2 px-1 text-center rounded-xl font-bold text-xs border transition min-h-[44px] flex items-center justify-center gap-1 ${
+                className={`py-2 px-1 text-center font-bold text-xs border transition min-h-[44px] flex items-center justify-center gap-1 ${
                   method === m
                     ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
                     : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700/60'
@@ -234,7 +234,7 @@ export const RecordPaymentModal: React.FC = () => {
               value={reference}
               onChange={(e) => setReference(e.target.value.toUpperCase())}
               placeholder={method === 'M-Pesa' ? 'e.g. QKL892MN' : 'e.g. REC-104'}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-mono uppercase text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+              className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs font-mono uppercase text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
               required
             />
           </div>
@@ -245,7 +245,7 @@ export const RecordPaymentModal: React.FC = () => {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+              className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
               required
             />
           </div>
@@ -261,7 +261,7 @@ export const RecordPaymentModal: React.FC = () => {
               type="month"
               value={coversMonth}
               onChange={(e) => setCoversMonth(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+              className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
               required
             />
           </div>
@@ -269,7 +269,7 @@ export const RecordPaymentModal: React.FC = () => {
           {/* Optional Receipt Photo from Phone Camera */}
           <div>
             <label className="block text-slate-300 font-semibold mb-1">Receipt Photo</label>
-            <label className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700/60 cursor-pointer min-h-[44px] text-slate-300">
+            <label className="flex items-center gap-2 px-3 py-2.5 bg-slate-800 border border-slate-700 hover:bg-slate-700/60 cursor-pointer min-h-[44px] text-slate-300">
               <Camera className="w-4 h-4 text-emerald-400 shrink-0" />
               <span className="truncate">
                 {receiptPhotoName ? receiptPhotoName : 'Snap / attach receipt'}
@@ -298,13 +298,13 @@ export const RecordPaymentModal: React.FC = () => {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="e.g. Paid in cash at the gate, promised balance on Friday"
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[40px]"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[40px]"
           />
         </div>
 
         {/* Live Balance Preview */}
         {arrearsInfo && (
-          <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
+          <div className="bg-slate-950/60 border border-slate-800 p-3 flex items-center justify-between text-xs">
             <span className="text-slate-400">Projected Tenant Balance:</span>
             <span
               className={`font-black text-sm ${
@@ -321,14 +321,14 @@ export const RecordPaymentModal: React.FC = () => {
           <button
             type="button"
             onClick={closePaymentModal}
-            className="px-4 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
+            className="px-4 py-2.5 text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
           >
             {isSubmitting ? 'Saving...' : 'Save Payment'}
           </button>

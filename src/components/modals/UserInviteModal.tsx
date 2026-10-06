@@ -55,7 +55,7 @@ export const UserInviteModal: React.FC = () => {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="e.g. Jackson Omondi, David Kimani"
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
             required
           />
         </div>
@@ -71,7 +71,7 @@ export const UserInviteModal: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="user@rentbook.ke"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+              className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
               required
             />
           </div>
@@ -83,7 +83,7 @@ export const UserInviteModal: React.FC = () => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="0711998877"
-              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+              className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs font-mono text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
             />
           </div>
         </div>
@@ -101,7 +101,7 @@ export const UserInviteModal: React.FC = () => {
                   key={r}
                   type="button"
                   onClick={() => setRole(r as UserRole)}
-                  className={`py-2 px-1 rounded-xl font-bold uppercase text-xs border transition min-h-[44px] ${
+                  className={`py-2 px-1 font-bold uppercase text-xs border transition min-h-[44px] ${
                     role === r
                       ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
                       : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
@@ -120,7 +120,7 @@ export const UserInviteModal: React.FC = () => {
           <select
             value={targetPropertyId}
             onChange={(e) => setTargetPropertyId(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px]"
           >
             {activeRole === 'admin' && <option value="all">All Properties (Global Master)</option>}
             {visibleProperties.map((p) => (
@@ -136,14 +136,14 @@ export const UserInviteModal: React.FC = () => {
           <button
             type="button"
             onClick={closeInviteModal}
-            className="px-4 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
+            className="px-4 py-2.5 text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
           >
             {isSubmitting ? 'Sending...' : 'Send Invite'}
           </button>

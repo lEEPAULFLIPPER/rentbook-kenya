@@ -52,12 +52,12 @@ export const AuditLogScreen: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-12 select-none">
       {/* 1. HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-4 shadow-sm">
         <div>
           <h1 className="text-base sm:text-lg font-black text-slate-100 tracking-tight flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-purple-400" />
             <span>Master Audit Trail</span>
-            <span className="text-xs font-mono font-normal text-purple-300 px-2 py-0.5 rounded-full bg-purple-950 border border-purple-800">
+            <span className="text-xs font-mono font-normal text-purple-300 px-2 py-0.5 bg-purple-950 border border-purple-800">
               Append-Only ({filteredLogs.length} Records)
             </span>
           </h1>
@@ -69,7 +69,7 @@ export const AuditLogScreen: React.FC = () => {
         <button
           type="button"
           onClick={handleExportCSV}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow transition active:scale-95 min-h-[40px]"
+          className="flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow transition active:scale-95 min-h-[40px]"
         >
           <Download className="w-4 h-4" />
           <span>Export Audit CSV</span>
@@ -77,7 +77,7 @@ export const AuditLogScreen: React.FC = () => {
       </div>
 
       {/* 2. SEARCH & FILTER */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 bg-slate-900/60 border border-slate-800 rounded-xl p-2.5">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 bg-slate-900/60 border border-slate-800 p-2.5">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -85,14 +85,14 @@ export const AuditLogScreen: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search actor, table, or reason..."
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[40px]"
+            className="w-full bg-slate-800 border border-slate-700 pl-9 pr-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[40px]"
           />
         </div>
 
         <select
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none min-h-[40px] w-full sm:w-auto"
+          className="bg-slate-800 border border-slate-700 px-3 py-2 text-xs text-slate-200 focus:outline-none min-h-[40px] w-full sm:w-auto"
         >
           <option value="all">All Actions</option>
           <option value="INSERT">INSERT (Create)</option>
@@ -105,7 +105,7 @@ export const AuditLogScreen: React.FC = () => {
       </div>
 
       {/* 3. AUDIT LOG TABLE */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-slate-900 border border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto max-h-[620px]">
           <table className="w-full text-left text-xs border-collapse">
             <thead className="bg-slate-800 text-slate-300 font-bold sticky top-0 z-10 border-b border-slate-700">
@@ -129,7 +129,7 @@ export const AuditLogScreen: React.FC = () => {
                   <td className="px-3.5 py-2.5 whitespace-nowrap">
                     <span className="font-bold text-slate-200">{log.actor_name}</span>
                     <span
-                      className={`ml-1.5 px-1.5 py-0.2 rounded text-[9px] uppercase font-mono font-bold ${
+                      className={`ml-1.5 px-1.5 py-0.2 text-[9px] uppercase font-mono font-bold ${
                         log.actor_role === 'admin'
                           ? 'bg-purple-950 text-purple-300'
                           : log.actor_role === 'landlord'
@@ -143,7 +143,7 @@ export const AuditLogScreen: React.FC = () => {
 
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono ${
+                      className={`px-2 py-0.5 text-[10px] font-black uppercase font-mono ${
                         log.action === 'INSERT'
                           ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
                           : log.action === 'APPROVE'
@@ -174,7 +174,7 @@ export const AuditLogScreen: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setSelectedLog(log)}
-                        className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-purple-300 text-[10px] font-mono border border-slate-700"
+                        className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-purple-300 text-[10px] font-mono border border-slate-700"
                       >
                         Inspect
                       </button>
@@ -192,7 +192,7 @@ export const AuditLogScreen: React.FC = () => {
       {/* 4. JSON INSPECTION MODAL */}
       {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-4 flex flex-col gap-3 text-xs text-slate-200">
+          <div className="bg-slate-900 border border-slate-700 max-w-lg w-full p-4 flex flex-col gap-3 text-xs text-slate-200">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h3 className="font-bold text-slate-100">Audit Record Inspection</h3>
               <button
@@ -208,7 +208,7 @@ export const AuditLogScreen: React.FC = () => {
               <div className="text-[10px] text-slate-400 font-semibold uppercase mb-1">
                 Before State:
               </div>
-              <pre className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 font-mono text-[11px] text-amber-300 overflow-x-auto">
+              <pre className="bg-slate-950 p-2.5 border border-slate-800 font-mono text-[11px] text-amber-300 overflow-x-auto">
                 {selectedLog.before_json
                   ? JSON.stringify(selectedLog.before_json, null, 2)
                   : 'null (New Record)'}
@@ -219,7 +219,7 @@ export const AuditLogScreen: React.FC = () => {
               <div className="text-[10px] text-slate-400 font-semibold uppercase mb-1">
                 After State:
               </div>
-              <pre className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-300 overflow-x-auto">
+              <pre className="bg-slate-950 p-2.5 border border-slate-800 font-mono text-[11px] text-emerald-300 overflow-x-auto">
                 {selectedLog.after_json
                   ? JSON.stringify(selectedLog.after_json, null, 2)
                   : 'null (Deleted)'}

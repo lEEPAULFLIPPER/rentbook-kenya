@@ -71,13 +71,13 @@ export const DashboardScreen: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-12 select-none">
       {/* 1. TOP HEADER SUMMARY & QUICK ACTIONS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3.5 sm:p-4 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base sm:text-lg font-black text-slate-100 tracking-tight">
               {currentProperty?.name || 'Compound Overview'}
             </h1>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-emerald-400 border border-slate-700">
+            <span className="text-[11px] font-mono px-2 py-0.5 bg-slate-800 text-emerald-400 border border-slate-700">
               {currentProperty?.location || 'Kenya'}
             </span>
           </div>
@@ -92,7 +92,7 @@ export const DashboardScreen: React.FC = () => {
           <button
             type="button"
             onClick={() => openPaymentModal()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-95 min-h-[40px]"
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition active:scale-95 min-h-[40px]"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Record Rent</span>
@@ -100,7 +100,7 @@ export const DashboardScreen: React.FC = () => {
           <button
             type="button"
             onClick={() => openExpenseModal()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition active:scale-95 min-h-[40px]"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition active:scale-95 min-h-[40px]"
           >
             <Plus className="w-4 h-4 text-amber-400 stroke-[2.5]" />
             <span>Add Expense</span>
@@ -109,7 +109,7 @@ export const DashboardScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => openPropertyModal()}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition active:scale-95 min-h-[40px]"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition active:scale-95 min-h-[40px]"
             >
               <Building className="w-4 h-4 text-sky-400" />
               <span>New Flat</span>
@@ -123,7 +123,7 @@ export const DashboardScreen: React.FC = () => {
         {/* KPI 1: Occupancy */}
         <div
           onClick={() => setCurrentScreen('units')}
-          className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
+          className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Occupancy</span>
@@ -144,7 +144,7 @@ export const DashboardScreen: React.FC = () => {
         {/* KPI 2: Collections This Month */}
         <div
           onClick={() => setCurrentScreen('cashbook')}
-          className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
+          className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">This Month Collected</span>
@@ -162,7 +162,7 @@ export const DashboardScreen: React.FC = () => {
         {/* KPI 3: Total Arrears Owed */}
         <div
           onClick={() => setCurrentScreen('debts')}
-          className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
+          className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
         >
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Total Arrears Owed</span>
@@ -181,7 +181,7 @@ export const DashboardScreen: React.FC = () => {
         {activeRole !== 'caretaker' ? (
           <div
             onClick={() => setCurrentScreen('cashbook')}
-            className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
+            className="bg-slate-900 border border-slate-800 hover:border-slate-700 p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
           >
             <div className="flex items-center justify-between text-slate-400 mb-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider">Cash Book Balance</span>
@@ -198,7 +198,7 @@ export const DashboardScreen: React.FC = () => {
         ) : (
           <div
             onClick={() => setCurrentScreen('units')}
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
+            className="bg-slate-900 border border-slate-800 p-3 sm:p-4 cursor-pointer transition shadow-sm flex flex-col justify-between"
           >
             <div className="flex items-center justify-between text-slate-400 mb-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider">My Shift Mode</span>
@@ -215,7 +215,7 @@ export const DashboardScreen: React.FC = () => {
 
       {/* 3. PENDING APPROVALS ALERT (Landlord & Admin) */}
       {activeRole !== 'caretaker' && pendingPayments.length > 0 && (
-        <div className="bg-amber-950/40 border border-amber-600/50 rounded-2xl p-3.5 sm:p-4 flex flex-col gap-2.5">
+        <div className="bg-amber-950/40 border border-amber-600/50 p-3.5 sm:p-4 flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
@@ -239,7 +239,7 @@ export const DashboardScreen: React.FC = () => {
               return (
                 <div
                   key={pay.id}
-                  className="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 flex items-center justify-between text-xs"
+                  className="bg-slate-900/90 border border-slate-700/80 p-3 flex items-center justify-between text-xs"
                 >
                   <div>
                     <div className="font-bold text-slate-100">
@@ -255,7 +255,7 @@ export const DashboardScreen: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => approvePayment(pay.id)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition active:scale-95"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition active:scale-95"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Approve</span>
@@ -270,7 +270,7 @@ export const DashboardScreen: React.FC = () => {
       {/* 4. SPLIT ROW: ARREARS GLANCE & RECENT CASH BOOK TRANSACTIONS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* LEFT: Arrears Debtors at a Glance */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+        <div className="bg-slate-900 border border-slate-800 p-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
               <div className="flex items-center gap-2">
@@ -293,7 +293,7 @@ export const DashboardScreen: React.FC = () => {
                 .map((debtor) => (
                   <div
                     key={debtor.tenant.id}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 text-xs transition"
+                    className="flex items-center justify-between p-2.5 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 text-xs transition"
                   >
                     <div>
                       <div className="font-bold text-slate-200">
@@ -305,7 +305,7 @@ export const DashboardScreen: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className="font-black text-rose-400">{formatKES(debtor.balance)}</div>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-rose-950 text-rose-300 font-bold uppercase">
+                      <span className="text-[10px] px-1.5 py-0.2 bg-rose-950 text-rose-300 font-bold uppercase">
                         {debtor.bucket} Days
                       </span>
                     </div>
@@ -321,7 +321,7 @@ export const DashboardScreen: React.FC = () => {
         </div>
 
         {/* RIGHT: Recent Activity / Cash Book Feed */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+        <div className="bg-slate-900 border border-slate-800 p-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
               <div className="flex items-center gap-2">
@@ -343,11 +343,11 @@ export const DashboardScreen: React.FC = () => {
               {cashBookEntries.slice(0, 4).map((entry) => (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs"
+                  className="flex items-center justify-between p-2.5 bg-slate-800/50 border border-slate-700/60 text-xs"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
-                      className={`p-1.5 rounded-lg shrink-0 ${
+                      className={`p-1.5 shrink-0 ${
                         entry.type === 'in'
                           ? 'bg-emerald-950 text-emerald-400'
                           : 'bg-rose-950 text-rose-400'
@@ -376,7 +376,7 @@ export const DashboardScreen: React.FC = () => {
                       {entry.type === 'in' ? `+${formatKES(entry.money_in)}` : `-${formatKES(entry.money_out)}`}
                     </div>
                     <span
-                      className={`text-[9px] px-1.5 py-0.2 rounded font-mono uppercase ${
+                      className={`text-[9px] px-1.5 py-0.2 font-mono uppercase ${
                         entry.status === 'approved'
                           ? 'bg-emerald-950/80 text-emerald-300'
                           : 'bg-amber-950/80 text-amber-300'

@@ -14,8 +14,8 @@ export const UndoToast: React.FC = () => {
 
   return (
     <div className="fixed bottom-20 sm:bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-200">
-      <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl text-xs text-slate-100 max-w-md">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] font-mono shrink-0">
+      <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-900 border border-slate-700 shadow-2xl text-xs text-slate-100 max-w-md">
+        <span className="flex h-6 w-6 items-center justify-center bg-amber-500/20 text-amber-300 font-bold text-[11px] font-mono shrink-0">
           {undoState.secondsRemaining}s
         </span>
 
@@ -27,7 +27,7 @@ export const UndoToast: React.FC = () => {
             undoState.undoAction();
             dismissUndo();
           }}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 active:scale-95 transition min-h-[36px]"
+          className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 active:scale-95 transition min-h-[36px]"
         >
           <RotateCcw className="w-3.5 h-3.5" />
           <span>Undo</span>

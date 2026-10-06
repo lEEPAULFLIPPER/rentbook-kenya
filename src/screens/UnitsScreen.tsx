@@ -62,11 +62,11 @@ export const UnitsScreen: React.FC = () => {
   return (
     <div className="flex flex-col gap-4 pb-12 select-none">
       {/* 1. TOP HEADER & CONTROLS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-3.5 sm:p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3.5 sm:p-4">
         <div>
           <h1 className="text-base sm:text-lg font-black text-slate-100 tracking-tight flex items-center gap-2">
             <span>Houses & Apartments</span>
-            <span className="text-xs font-mono font-normal text-emerald-400 px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+            <span className="text-xs font-mono font-normal text-emerald-400 px-2 py-0.5 bg-slate-800 border border-slate-700">
               {units.length} Total Units
             </span>
           </h1>
@@ -81,7 +81,7 @@ export const UnitsScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => openBulkRenameModal(currentProperty.id)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95 min-h-[40px]"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95 min-h-[40px]"
             >
               <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
               <span>Bulk Rename Houses</span>
@@ -91,12 +91,12 @@ export const UnitsScreen: React.FC = () => {
       </div>
 
       {/* 2. FILTER TABS (FLOOR & OCCUPANCY) */}
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-900/60 border border-slate-800 rounded-xl p-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-900/60 border border-slate-800 p-2.5">
         <div className="flex items-center gap-1.5 overflow-x-auto py-1">
           <button
             type="button"
             onClick={() => setFloorFilter('all')}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition min-h-[36px] ${
+            className={`px-3 py-1 text-xs font-semibold transition min-h-[36px] ${
               floorFilter === 'all'
                 ? 'bg-emerald-600 text-white'
                 : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -111,7 +111,7 @@ export const UnitsScreen: React.FC = () => {
                 key={floor}
                 type="button"
                 onClick={() => setFloorFilter(floor)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition min-h-[36px] ${
+                className={`px-3 py-1 text-xs font-semibold transition min-h-[36px] ${
                   floorFilter === floor
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -126,7 +126,7 @@ export const UnitsScreen: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('all')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition min-h-[36px] ${
+            className={`px-2.5 py-1 text-xs font-medium transition min-h-[36px] ${
               statusFilter === 'all' ? 'bg-slate-700 text-white font-bold' : 'text-slate-400'
             }`}
           >
@@ -135,7 +135,7 @@ export const UnitsScreen: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('occupied')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition min-h-[36px] ${
+            className={`px-2.5 py-1 text-xs font-medium transition min-h-[36px] ${
               statusFilter === 'occupied'
                 ? 'bg-emerald-950 text-emerald-300 border border-emerald-600 font-bold'
                 : 'text-slate-400'
@@ -146,7 +146,7 @@ export const UnitsScreen: React.FC = () => {
           <button
             type="button"
             onClick={() => setStatusFilter('vacant')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition min-h-[36px] ${
+            className={`px-2.5 py-1 text-xs font-medium transition min-h-[36px] ${
               statusFilter === 'vacant'
                 ? 'bg-rose-950 text-rose-300 border border-rose-600 font-bold'
                 : 'text-slate-400'
@@ -164,7 +164,7 @@ export const UnitsScreen: React.FC = () => {
           return (
             <div key={floorNum} className="flex flex-col gap-2.5">
               <div className="flex items-center gap-2 px-1">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="h-2 w-2 bg-emerald-500" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-slate-300">
                   {getFloorDisplayName(floorNum)} ({floorUnits.length} Units)
                 </h2>
@@ -183,7 +183,7 @@ export const UnitsScreen: React.FC = () => {
                     <div
                       key={unit.id}
                       onClick={() => setCurrentScreen('unit-detail', unit.id)}
-                      className={`group relative rounded-2xl p-3.5 border transition cursor-pointer flex flex-col justify-between shadow-sm hover:shadow-md ${
+                      className={`group relative p-3.5 border transition cursor-pointer flex flex-col justify-between shadow-sm hover:shadow-md ${
                         isOccupied
                           ? 'bg-slate-900 border-slate-800 hover:border-emerald-500/60'
                           : 'bg-rose-950/20 border-rose-900/40 hover:border-rose-500/60'
@@ -216,7 +216,7 @@ export const UnitsScreen: React.FC = () => {
                         </div>
 
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider font-mono ${
+                          className={`px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider font-mono ${
                             isOccupied
                               ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
                               : 'bg-rose-950 text-rose-300 border border-rose-800'

@@ -70,7 +70,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
           onClick={() => setCurrentScreen('dashboard')}
           className="flex items-center gap-1.5 cursor-pointer font-bold text-base sm:text-lg text-emerald-400 tracking-tight shrink-0"
         >
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black">
+          <span className="flex h-7 w-7 items-center justify-center bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-xs font-black">
             🇰🇪
           </span>
           <span className="hidden min-[480px]:inline font-black text-slate-100">
@@ -83,7 +83,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
           <button
             type="button"
             onClick={() => setIsPropertyDropdownOpen(!isPropertyDropdownOpen)}
-            className="flex items-center gap-1.5 max-w-[130px] sm:max-w-[190px] md:max-w-[240px] px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-800 text-xs font-medium text-slate-200 border border-slate-700/80 transition truncate min-h-[36px]"
+            className="flex items-center gap-1.5 max-w-[130px] sm:max-w-[190px] md:max-w-[240px] px-2.5 py-1.5 bg-slate-800/90 hover:bg-slate-800 text-xs font-medium text-slate-200 border border-slate-700/80 transition truncate min-h-[36px]"
           >
             <Building2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             <span className="truncate">{currentProperty?.name || 'All Flats'}</span>
@@ -92,7 +92,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
 
           {isPropertyDropdownOpen && (
             <div
-              className="absolute left-0 mt-1.5 w-56 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100"
+              className="absolute left-0 mt-1.5 w-56 bg-slate-800 border border-slate-700 shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100"
               onMouseLeave={() => setIsPropertyDropdownOpen(false)}
             >
               <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-700/60">
@@ -138,13 +138,13 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
       <button
         type="button"
         onClick={onOpenCommandPalette}
-        className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60 text-xs transition min-w-[160px] lg:min-w-[210px] justify-between min-h-[36px]"
+        className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-700/60 text-xs transition min-w-[160px] lg:min-w-[210px] justify-between min-h-[36px]"
       >
         <span className="flex items-center gap-1.5">
           <Search className="w-3.5 h-3.5 text-slate-400" />
           <span>Jump to house / tenant...</span>
         </span>
-        <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-slate-900 border border-slate-700 text-slate-400 rounded">
+        <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-mono bg-slate-900 border border-slate-700 text-slate-400 ">
           Ctrl+K
         </kbd>
       </button>
@@ -155,7 +155,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
         <button
           type="button"
           onClick={() => openPaymentModal()}
-          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-sm hover:shadow transition active:scale-95 min-h-[36px]"
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs shadow-sm hover:shadow transition active:scale-95 min-h-[36px]"
           title="Shortcut: Press 'N'"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -167,7 +167,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
         <button
           type="button"
           onClick={() => openExpenseModal()}
-          className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95 min-h-[36px]"
+          className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95 min-h-[36px]"
           title="Shortcut: Press 'E'"
         >
           <Plus className="w-3.5 h-3.5 text-amber-400 stroke-[2.5]" />
@@ -180,10 +180,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
           <button
             type="button"
             onClick={() => setCurrentScreen('cashbook')}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-950/60 border border-amber-600/60 text-amber-300 text-xs font-semibold animate-pulse hover:bg-amber-900/60 min-h-[36px]"
+            className="flex items-center gap-1 px-2 py-1 bg-amber-950/60 border border-amber-600/60 text-amber-300 text-xs font-semibold animate-pulse hover:bg-amber-900/60 min-h-[36px]"
             title={`${pendingApprovalsCount} entries awaiting approval`}
           >
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span className="w-2 h-2 bg-amber-400" />
             <span className="text-[11px]">{pendingApprovalsCount} Pending</span>
           </button>
         )}
@@ -193,7 +193,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
           <button
             type="button"
             onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold uppercase tracking-wider transition min-h-[36px] ${getRoleBadgeColor(
+            className={`flex items-center gap-1.5 px-2.5 py-1 border text-xs font-semibold uppercase tracking-wider transition min-h-[36px] ${getRoleBadgeColor(
               activeRole
             )}`}
             title="Switch user or preview role"
@@ -205,7 +205,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
 
           {isRoleDropdownOpen && (
             <div
-              className="absolute right-0 mt-1.5 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-50 text-slate-200 animate-in fade-in zoom-in-95 duration-100"
+              className="absolute right-0 mt-1.5 w-64 bg-slate-800 border border-slate-700 shadow-2xl py-1.5 z-50 text-slate-200 animate-in fade-in zoom-in-95 duration-100"
               onMouseLeave={() => setIsRoleDropdownOpen(false)}
             >
               <div className="px-3 py-1.5 border-b border-slate-700/60">
@@ -234,7 +234,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
                   >
                     <span className="truncate">{p.full_name}</span>
                     <span
-                      className={`text-[10px] uppercase font-mono px-1.5 py-0.5 rounded ${
+                      className={`text-[10px] uppercase font-mono px-1.5 py-0.5 ${
                         p.role === 'admin'
                           ? 'bg-purple-900/60 text-purple-300'
                           : p.role === 'landlord'
@@ -262,7 +262,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
                         setViewAsRole(null);
                         setIsRoleDropdownOpen(false);
                       }}
-                      className={`py-1 text-[11px] rounded text-center transition ${
+                      className={`py-1 text-[11px] text-center transition ${
                         !isViewingAs ? 'bg-purple-600 text-white font-bold' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                     >
@@ -274,7 +274,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
                         setViewAsRole('landlord');
                         setIsRoleDropdownOpen(false);
                       }}
-                      className={`py-1 text-[11px] rounded text-center transition ${
+                      className={`py-1 text-[11px] text-center transition ${
                         viewAsRole === 'landlord' ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                     >
@@ -286,7 +286,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
                         setViewAsRole('caretaker');
                         setIsRoleDropdownOpen(false);
                       }}
-                      className={`py-1 text-[11px] rounded text-center transition ${
+                      className={`py-1 text-[11px] text-center transition ${
                         viewAsRole === 'caretaker' ? 'bg-amber-600 text-white font-bold' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                     >

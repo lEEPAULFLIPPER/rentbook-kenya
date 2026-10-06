@@ -80,7 +80,7 @@ export const UnitModal: React.FC = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={activeRole === 'caretaker'}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px] disabled:opacity-50"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs font-mono font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px] disabled:opacity-50"
             required
           />
         </div>
@@ -95,7 +95,7 @@ export const UnitModal: React.FC = () => {
             value={monthlyRent}
             onChange={(e) => setMonthlyRent(e.target.value)}
             disabled={activeRole === 'caretaker'}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-bold text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px] disabled:opacity-50"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs font-bold text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[44px] disabled:opacity-50"
             required
           />
         </div>
@@ -107,7 +107,7 @@ export const UnitModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatus('occupied')}
-              className={`py-2 rounded-xl font-bold border transition min-h-[44px] ${
+              className={`py-2 font-bold border transition min-h-[44px] ${
                 status === 'occupied'
                   ? 'bg-emerald-600 text-white border-emerald-500'
                   : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
@@ -118,7 +118,7 @@ export const UnitModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setStatus('vacant')}
-              className={`py-2 rounded-xl font-bold border transition min-h-[44px] ${
+              className={`py-2 font-bold border transition min-h-[44px] ${
                 status === 'vacant'
                   ? 'bg-rose-600 text-white border-rose-500'
                   : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
@@ -137,7 +137,7 @@ export const UnitModal: React.FC = () => {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. Master ensuite, key with caretaker Jackson, tiles replaced"
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full bg-slate-800 border border-slate-700 p-3 text-xs text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
 
@@ -159,14 +159,14 @@ export const UnitModal: React.FC = () => {
             <button
               type="button"
               onClick={closeUnitModal}
-              className="px-4 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
+              className="px-4 py-2.5 text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
             >
               Save Changes
             </button>

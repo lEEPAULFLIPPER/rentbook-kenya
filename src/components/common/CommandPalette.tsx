@@ -74,7 +74,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-100">
       <div
-        className="w-full max-w-xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-slate-100"
+        className="w-full max-w-xl bg-slate-900 border border-slate-700/80 shadow-2xl overflow-hidden flex flex-col text-slate-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
@@ -97,7 +97,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               <X className="w-4 h-4" />
             </button>
           )}
-          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[11px] font-mono bg-slate-800 text-slate-400 rounded border border-slate-700">
+          <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[11px] font-mono bg-slate-800 text-slate-400 border border-slate-700">
             Esc
           </kbd>
         </div>
@@ -114,7 +114,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               onClose();
               openPaymentModal();
             }}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 text-left transition"
+            className="flex items-center gap-2.5 px-3 py-2 text-slate-200 hover:bg-slate-800 text-left transition"
           >
             <Plus className="w-4 h-4 text-emerald-400" />
             <span className="font-medium">+ Record Rent Payment</span>
@@ -126,7 +126,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               onClose();
               openExpenseModal();
             }}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 text-left transition"
+            className="flex items-center gap-2.5 px-3 py-2 text-slate-200 hover:bg-slate-800 text-left transition"
           >
             <Plus className="w-4 h-4 text-amber-400" />
             <span className="font-medium">+ Add Compound Expense</span>
@@ -139,7 +139,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                 onClose();
                 openPropertyModal();
               }}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 text-left transition"
+              className="flex items-center gap-2.5 px-3 py-2 text-slate-200 hover:bg-slate-800 text-left transition"
             >
               <Building className="w-4 h-4 text-sky-400" />
               <span className="font-medium">+ Add New Property (Flats)</span>
@@ -157,7 +157,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                   key={u.id}
                   type="button"
                   onClick={() => handleSelectUnit(u.id)}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 text-left transition"
+                  className="flex items-center justify-between px-3 py-2 text-slate-200 hover:bg-slate-800 text-left transition"
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-emerald-400">House {u.name}</span>
@@ -166,7 +166,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                     </span>
                   </div>
                   <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold ${
+                    className={`text-[10px] px-1.5 py-0.5 uppercase font-semibold ${
                       u.status === 'occupied' ? 'bg-emerald-950 text-emerald-300' : 'bg-rose-950 text-rose-300'
                     }`}
                   >
@@ -188,7 +188,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
                   key={t.id}
                   type="button"
                   onClick={() => handleSelectScreen('tenants')}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-slate-200 hover:bg-slate-800 text-left transition"
+                  className="flex items-center justify-between px-3 py-2 text-slate-200 hover:bg-slate-800 text-left transition"
                 >
                   <div className="flex items-center gap-2">
                     <Users className="w-3.5 h-3.5 text-slate-400" />
@@ -207,7 +207,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <button
             type="button"
             onClick={() => handleSelectScreen('debts')}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition"
+            className="flex items-center gap-2.5 px-3 py-2 text-slate-300 hover:bg-slate-800 transition"
           >
             <AlertCircle className="w-4 h-4 text-rose-400" />
             <span>Arrears & Aging Debts</span>
@@ -217,7 +217,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               <button
                 type="button"
                 onClick={() => handleSelectScreen('cashbook')}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition"
+                className="flex items-center gap-2.5 px-3 py-2 text-slate-300 hover:bg-slate-800 transition"
               >
                 <BookOpen className="w-4 h-4 text-sky-400" />
                 <span>Cash Book (Running Ledger)</span>
@@ -225,7 +225,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               <button
                 type="button"
                 onClick={() => handleSelectScreen('reports')}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition"
+                className="flex items-center gap-2.5 px-3 py-2 text-slate-300 hover:bg-slate-800 transition"
               >
                 <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
                 <span>Reports & CSV Export</span>
@@ -233,7 +233,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               <button
                 type="button"
                 onClick={() => handleSelectScreen('team')}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition"
+                className="flex items-center gap-2.5 px-3 py-2 text-slate-300 hover:bg-slate-800 transition"
               >
                 <UserCheck className="w-4 h-4 text-teal-400" />
                 <span>Staff & Caretaker Management</span>
@@ -244,7 +244,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
             <button
               type="button"
               onClick={() => handleSelectScreen('audit')}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition"
+              className="flex items-center gap-2.5 px-3 py-2 text-slate-300 hover:bg-slate-800 transition"
             >
               <ShieldAlert className="w-4 h-4 text-purple-400" />
               <span>Audit Log (Append-Only)</span>
@@ -253,7 +253,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
           <button
             type="button"
             onClick={() => handleSelectScreen('settings')}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 transition"
+            className="flex items-center gap-2.5 px-3 py-2 text-slate-300 hover:bg-slate-800 transition"
           >
             <Settings className="w-4 h-4 text-slate-400" />
             <span>Settings & Backup</span>

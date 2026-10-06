@@ -20,7 +20,7 @@ export const LiveNotificationToast: React.FC = () => {
       {liveToasts.map((toast) => (
         <div
           key={toast.id}
-          className={`pointer-events-auto flex items-start gap-2.5 p-3 rounded-xl border shadow-xl backdrop-blur-md animate-in slide-in-from-right-4 fade-in duration-200 text-xs ${
+          className={`pointer-events-auto flex items-start gap-2.5 p-3 border shadow-xl backdrop-blur-md animate-in slide-in-from-right-4 fade-in duration-200 text-xs ${
             toast.type === 'success'
               ? 'bg-emerald-950/90 border-emerald-600/60 text-emerald-100'
               : toast.type === 'warning'
@@ -44,7 +44,7 @@ export const LiveNotificationToast: React.FC = () => {
           <button
             type="button"
             onClick={() => dismissToast(toast.id)}
-            className="p-1 rounded text-slate-400 hover:text-white shrink-0 min-h-[32px] min-w-[32px] flex items-center justify-center"
+            className="p-1 text-slate-400 hover:text-white shrink-0 min-h-[32px] min-w-[32px] flex items-center justify-center"
           >
             <X className="w-3.5 h-3.5" />
           </button>

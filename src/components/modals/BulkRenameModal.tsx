@@ -72,7 +72,7 @@ export const BulkRenameModal: React.FC = () => {
           <select
             value={schemeType}
             onChange={(e) => setSchemeType(e.target.value as NamingSchemeType)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 min-h-[44px]"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2 text-xs text-slate-100 min-h-[44px]"
           >
             <option value="scheme1">Scheme 1: Block + Unit (Ground=A1..A4, 1st=B1..B4)</option>
             <option value="scheme2">Scheme 2: Floor Prefix + Number (G1..G4, F1..F4, S1..S4)</option>
@@ -84,7 +84,7 @@ export const BulkRenameModal: React.FC = () => {
         </div>
 
         {/* Side-by-Side Comparison Table */}
-        <div className="border border-slate-700/80 rounded-xl overflow-hidden bg-slate-950/60 max-h-64 overflow-y-auto">
+        <div className="border border-slate-700/80 overflow-hidden bg-slate-950/60 max-h-64 overflow-y-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-800/80 text-slate-300 border-b border-slate-700">
               <tr>
@@ -110,7 +110,7 @@ export const BulkRenameModal: React.FC = () => {
         </div>
 
         {/* Warning Callout */}
-        <div className="bg-amber-950/40 border border-amber-600/40 rounded-xl p-3 text-[11px] text-amber-200">
+        <div className="bg-amber-950/40 border border-amber-600/40 p-3 text-[11px] text-amber-200">
           <strong>Note:</strong> Bulk rename will overwrite any manual custom labels (such as
           "A3 (Big)"). Tenants and payment histories will remain intact.
         </div>
@@ -120,7 +120,7 @@ export const BulkRenameModal: React.FC = () => {
           <button
             type="button"
             onClick={closeBulkRenameModal}
-            className="px-4 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
+            className="px-4 py-2.5 text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
           >
             Cancel
           </button>
@@ -128,7 +128,7 @@ export const BulkRenameModal: React.FC = () => {
             type="button"
             onClick={handleApply}
             disabled={isSubmitting}
-            className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-50 min-h-[44px]"
           >
             {isSubmitting ? 'Applying...' : 'Apply Bulk Rename'}
           </button>

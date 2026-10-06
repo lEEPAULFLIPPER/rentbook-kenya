@@ -69,7 +69,7 @@ export const ConfirmDangerModal: React.FC = () => {
       maxWidth="md"
     >
       <div className="flex flex-col gap-4 text-xs">
-        <div className="flex items-start gap-3 p-3 rounded-xl bg-rose-950/50 border border-rose-600/60 text-rose-200">
+        <div className="flex items-start gap-3 p-3 bg-rose-950/50 border border-rose-600/60 text-rose-200">
           <AlertOctagon className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
           <div className="leading-relaxed">{details.desc}</div>
         </div>
@@ -84,7 +84,7 @@ export const ConfirmDangerModal: React.FC = () => {
             value={confirmInput}
             onChange={(e) => setConfirmInput(e.target.value)}
             placeholder="Type DELETE"
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 min-h-[44px]"
+            className="w-full bg-slate-800 border border-slate-700 px-3 py-2.5 text-xs font-mono font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-rose-500 min-h-[44px]"
           />
         </div>
 
@@ -92,7 +92,7 @@ export const ConfirmDangerModal: React.FC = () => {
           <button
             type="button"
             onClick={closeDangerModal}
-            className="px-4 py-2.5 rounded-xl text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
+            className="px-4 py-2.5 text-slate-300 hover:bg-slate-800 font-medium transition min-h-[44px]"
           >
             Cancel
           </button>
@@ -100,7 +100,7 @@ export const ConfirmDangerModal: React.FC = () => {
             type="button"
             onClick={handleExecute}
             disabled={!isConfirmed || isSubmitting}
-            className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none min-h-[44px]"
+            className="px-6 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold shadow-md hover:shadow-lg transition active:scale-95 disabled:opacity-30 disabled:pointer-events-none min-h-[44px]"
           >
             {isSubmitting ? 'Deleting...' : 'Confirm Purge'}
           </button>

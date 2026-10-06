@@ -76,7 +76,7 @@ export const Sidebar: React.FC = () => {
               key={item.id}
               type="button"
               onClick={() => setCurrentScreen(item.id)}
-              className={`group flex items-center gap-3 px-3.5 py-2.5 mx-1.5 rounded-xl text-xs font-medium transition min-h-[44px] ${
+              className={`group flex items-center gap-3 px-3.5 py-2.5 mx-1.5 text-xs font-medium transition min-h-[44px] ${
                 isActive
                   ? 'bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70 border border-transparent'
@@ -90,7 +90,7 @@ export const Sidebar: React.FC = () => {
                   }`}
                 />
                 {item.badge && !isExpanded && (
-                  <span className="absolute -top-1.5 -right-1.5 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-slate-900" />
+                  <span className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-amber-400 ring-2 ring-slate-900" />
                 )}
               </div>
 
@@ -98,7 +98,7 @@ export const Sidebar: React.FC = () => {
                 <div className="flex-1 flex items-center justify-between truncate animate-in fade-in duration-150">
                   <span className="truncate">{item.label}</span>
                   {item.badge && (
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    <span className="px-1.5 py-0.2 text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
                       {item.badge}
                     </span>
                   )}
@@ -114,7 +114,7 @@ export const Sidebar: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-center py-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 rounded-lg text-xs transition min-h-[36px]"
+          className="w-full flex items-center justify-center py-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 text-xs transition min-h-[36px]"
           title={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
         >
           {isExpanded ? (
