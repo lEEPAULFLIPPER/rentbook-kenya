@@ -25,6 +25,7 @@ import { TenantModal } from './components/modals/TenantModal';
 import { UnitModal } from './components/modals/UnitModal';
 import { UserInviteModal } from './components/modals/UserInviteModal';
 import { ConfirmDangerModal } from './components/modals/ConfirmDangerModal';
+import { ClientShareModal } from './components/modals/ClientShareModal';
 
 // Screens
 import { DashboardScreen } from './screens/DashboardScreen';
@@ -39,7 +40,13 @@ import { AuditLogScreen } from './screens/AuditLogScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 
 const MainLayout: React.FC = () => {
-  const { currentScreen, openPaymentModal, openExpenseModal } = useApp();
+  const {
+    currentScreen,
+    openPaymentModal,
+    openExpenseModal,
+    isClientShareModalOpen,
+    closeClientShareModal,
+  } = useApp();
   const { isViewingAs, viewAsRole } = useAuth();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
@@ -117,6 +124,10 @@ const MainLayout: React.FC = () => {
       <UnitModal />
       <UserInviteModal />
       <ConfirmDangerModal />
+      <ClientShareModal
+        isOpen={isClientShareModalOpen}
+        onClose={closeClientShareModal}
+      />
 
       {/* Command Palette */}
       <CommandPalette

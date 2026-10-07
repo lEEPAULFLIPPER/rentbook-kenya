@@ -13,6 +13,7 @@ import {
   NamingSchemeConfig,
   Payment,
   PaymentStatus,
+  PreviewUnitSpec,
   Property,
   PropertyAccess,
   ScreenType,
@@ -37,6 +38,7 @@ import { useAuth } from './AuthContext';
 import { generateUnitNames } from '../lib/namingEngine';
 import { addToOfflineQueue, getOfflineQueue, removeFromOfflineQueue } from '../lib/offlineQueue';
 import { formatKES } from '../lib/formatters';
+import { decodeShareSnapshot } from '../lib/shareEngine';
 
 interface LiveToast {
   id: string;
@@ -84,8 +86,8 @@ interface AppContextType {
 
   // Modal Controllers
   isPaymentModalOpen: boolean;
-  paymentPrefill: { unitId?: string; tenantId?: string } | null;
-  openPaymentModal: (prefill?: { unitId?: string; tenantId?: string } | null) => void;
+  paymentPrefill: { unitId?: string; tenantId?: string; coversMonth?: string } | null;
+  openPaymentModal: (prefill?: { unitId?: string; tenantId?: string; coversMonth?: string } | null) => void;
   closePaymentModal: () => void;
 
   isExpenseModalOpen: boolean;
@@ -116,6 +118,10 @@ interface AppContextType {
   openInviteModal: () => void;
   closeInviteModal: () => void;
 
+  isClientShareModalOpen: boolean;
+  openClientShareModal: () => void;
+  closeClientShareModal: () => void;
+
   isDangerModalOpen: boolean;
   dangerActionType: 'units' | 'payments' | 'all' | null;
   openDangerModal: (type: 'units' | 'payments' | 'all') => void;
@@ -126,7 +132,7 @@ interface AppContextType {
     propertyData: Omit<Property, 'id' | 'created_at' | 'updated_at'> & { id?: string },
     scheme: NamingSchemeConfig,
     defaultRent: number,
-    customNames?: string[]
+    customUnits?: PreviewUnitSpec[] | string[]
   ) => Promise<void>;
   updateProperty: (prop: Property) => Promise<void>;
   deleteProperty: (propertyId: string) => Promise<void>;
@@ -134,7 +140,11 @@ interface AppContextType {
   addUnit: (unit: Omit<Unit, 'id' | 'version' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateUnit: (unit: Unit) => Promise<void>;
   renameUnit: (unitId: string, newName: string) => Promise<void>;
-  bulkRenameUnits: (propertyId: string, scheme: NamingSchemeConfig) => Promise<void>;
+  bulkRenameUnits: (
+    propertyId: string,
+    scheme: NamingSchemeConfig,
+    customNamesMap?: Record<string, string>
+  ) => Promise<void>;
   deleteUnit: (unitId: string) => Promise<{ success: boolean; message?: string }>;
 
   saveTenant: (tenantData: Omit<Tenant, 'id' | 'version' | 'created_at' | 'updated_at'> & { id?: string }) => Promise<void>;
@@ -274,6 +284,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [unitModalData, setUnitModalData] = useState<Unit | null>(null);
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isClientShareModalOpen, setIsClientShareModalOpen] = useState(false);
   const [isDangerModalOpen, setIsDangerModalOpen] = useState(false);
   const [dangerActionType, setDangerActionType] = useState<'units' | 'payments' | 'all' | null>(null);
 
@@ -364,6 +375,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => {
       channel?.close();
     };
+  }, []);
+
+  // Hydrate snapshot from URL hash if opened via client share link (#share=...)
+  useEffect(() => {
+    try {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#share=')) {
+        const token = hash.slice(7);
+        const payload = decodeShareSnapshot(token);
+        if (payload && payload.property && Array.isArray(payload.units)) {
+          const incomingProp = payload.property;
+
+          // Merge property
+          setProperties((prev) => {
+            const idx = prev.findIndex((p) => p.id === incomingProp.id);
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = incomingProp;
+              return updated;
+            }
+            return [incomingProp, ...prev];
+          });
+          setSelectedPropertyId(incomingProp.id);
+
+          // Merge units
+          setUnits((prev) => {
+            const other = prev.filter((u) => u.property_id !== incomingProp.id);
+            return [...other, ...payload.units];
+          });
+
+          // Merge tenants
+          if (Array.isArray(payload.tenants)) {
+            const unitIds = new Set(payload.units.map((u) => u.id));
+            setTenants((prev) => {
+              const other = prev.filter((t) => !unitIds.has(t.unit_id));
+              return [...other, ...payload.tenants];
+            });
+          }
+
+          // Merge payments
+          if (Array.isArray(payload.payments)) {
+            const unitIds = new Set(payload.units.map((u) => u.id));
+            setPayments((prev) => {
+              const other = prev.filter((p) => !unitIds.has(p.unit_id));
+              return [...other, ...payload.payments];
+            });
+          }
+
+          // Merge expenses
+          if (Array.isArray(payload.expenses)) {
+            const incomingExpenses = payload.expenses;
+            setExpenses((prev) => {
+              const other = prev.filter((e) => e.property_id !== incomingProp.id);
+              return [...other, ...incomingExpenses];
+            });
+          }
+
+          // Clean URL hash and switch to cashbook view
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          setCurrentScreen('cashbook');
+          broadcastLiveAction(`Loaded client ledger for ${incomingProp.name}!`, 'success');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to parse share snapshot:', err);
+    }
   }, []);
 
   // Realtime Supabase Subscription (if live configured)
@@ -696,7 +773,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     propData: Omit<Property, 'id' | 'created_at' | 'updated_at'> & { id?: string },
     scheme: NamingSchemeConfig,
     defaultRent: number,
-    customNames?: string[]
+    customUnits?: PreviewUnitSpec[] | string[]
   ) => {
     const propId = propData.id || `prop-${Date.now()}`;
     const newProperty: Property = {
@@ -717,26 +794,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return [newProperty, ...prev];
     });
 
-    // Auto-generate units if creating new property
+    // Auto-generate or insert preview-configured units if creating new property
     if (!propData.id) {
-      const generated = generateUnitNames(
-        propData.floors,
-        propData.units_per_floor,
-        scheme,
-        propData.blocks
-      );
+      let newUnits: Unit[] = [];
 
-      const newUnits: Unit[] = generated.map((gen, idx) => ({
-        id: `unit-${propId}-${idx + 1}-${Math.random().toString(36).substring(2, 6)}`,
-        property_id: propId,
-        block_name: gen.blockName,
-        floor_number: gen.floorNumber,
-        name: customNames && customNames[idx] ? customNames[idx] : gen.name,
-        monthly_rent: defaultRent,
-        status: 'vacant',
-        version: 1,
-        created_at: new Date().toISOString(),
-      }));
+      if (customUnits && customUnits.length > 0 && typeof customUnits[0] === 'object') {
+        const previewSpecs = customUnits as PreviewUnitSpec[];
+        newUnits = previewSpecs.map((spec, idx) => ({
+          id: `unit-${propId}-${idx + 1}-${Math.random().toString(36).substring(2, 6)}`,
+          property_id: propId,
+          block_name: spec.blockName,
+          floor_number: spec.floorNumber,
+          name: spec.name.trim(),
+          monthly_rent: typeof spec.monthlyRent === 'number' && spec.monthlyRent > 0 ? spec.monthlyRent : defaultRent,
+          status: 'vacant',
+          version: 1,
+          created_at: new Date().toISOString(),
+        }));
+      } else {
+        const stringNames = Array.isArray(customUnits) ? (customUnits as string[]) : undefined;
+        const generated = generateUnitNames(
+          propData.floors,
+          propData.units_per_floor,
+          scheme,
+          propData.blocks
+        );
+
+        newUnits = generated.map((gen, idx) => ({
+          id: `unit-${propId}-${idx + 1}-${Math.random().toString(36).substring(2, 6)}`,
+          property_id: propId,
+          block_name: gen.blockName,
+          floor_number: gen.floorNumber,
+          name: stringNames && stringNames[idx] ? stringNames[idx] : gen.name,
+          monthly_rent: defaultRent,
+          status: 'vacant',
+          version: 1,
+          created_at: new Date().toISOString(),
+        }));
+      }
 
       setUnits((prev) => [...newUnits, ...prev]);
     }
@@ -789,7 +884,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     broadcastLiveAction(`Renamed house to "${newName}"`, 'info');
   };
 
-  const bulkRenameUnits = async (propertyId: string, scheme: NamingSchemeConfig) => {
+  const bulkRenameUnits = async (
+    propertyId: string,
+    scheme: NamingSchemeConfig,
+    customNamesMap?: Record<string, string>
+  ) => {
     const prop = properties.find((p) => p.id === propertyId);
     if (!prop) return;
 
@@ -798,6 +897,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const updatedUnits = units.map((u) => {
       if (u.property_id !== propertyId || u.deleted_at) return u;
+      if (customNamesMap && customNamesMap[u.id]) {
+        return { ...u, name: customNamesMap[u.id].trim() };
+      }
       const idx = existing.findIndex((e) => e.id === u.id);
       if (idx >= 0 && generated[idx]) {
         return { ...u, name: generated[idx].name };
@@ -1010,11 +1112,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     paymentId: string,
     reason: string
   ): Promise<{ success: boolean; message?: string }> => {
-    if (activeRole === 'caretaker') {
-      return { success: false, message: 'Caretakers cannot delete payment records' };
-    }
     const target = payments.find((p) => p.id === paymentId);
     if (!target) return { success: false, message: 'Not found' };
+
+    if (activeRole === 'caretaker' && target.status !== 'pending') {
+      return {
+        success: false,
+        message: 'Caretakers cannot delete already approved payments. Please request the landlord to remove it.',
+      };
+    }
 
     // Set 10-second undo window
     const snapshot = [...payments];
@@ -1156,7 +1262,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Modal helpers
-  const openPaymentModal = (prefill: { unitId?: string; tenantId?: string } | null = null) => {
+  const openPaymentModal = (prefill: { unitId?: string; tenantId?: string; coversMonth?: string } | null = null) => {
     setPaymentPrefill(prefill);
     setIsPaymentModalOpen(true);
   };
@@ -1191,6 +1297,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const openInviteModal = () => setIsInviteModalOpen(true);
   const closeInviteModal = () => setIsInviteModalOpen(false);
+
+  const openClientShareModal = () => setIsClientShareModalOpen(true);
+  const closeClientShareModal = () => setIsClientShareModalOpen(false);
 
   const openDangerModal = (type: 'units' | 'payments' | 'all') => {
     setDangerActionType(type);
@@ -1254,6 +1363,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isInviteModalOpen,
         openInviteModal,
         closeInviteModal,
+        isClientShareModalOpen,
+        openClientShareModal,
+        closeClientShareModal,
         isDangerModalOpen,
         dangerActionType,
         openDangerModal,

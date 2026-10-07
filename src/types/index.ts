@@ -157,10 +157,22 @@ export type NamingSchemeType =
   | 'scheme5' // House / Unit / Door prefix (House 1, House 2...)
   | 'scheme6'; // Custom pattern ({block}-{index}, etc.)
 
+export type GroundFloorNaming = 'G' | 'Ground' | 'GF' | 'Letter';
+
 export interface NamingSchemeConfig {
   type: NamingSchemeType;
   prefixWord?: 'House' | 'Unit' | 'Door';
   customPattern?: string; // e.g. "{block}-{floor}{index}"
+  groundFloorNaming?: GroundFloorNaming; // Kenyan standard: 'G' (G1..G4), 'Ground' (Ground 1..4), 'GF' (GF1..4), 'Letter' (A1..4)
+}
+
+export interface PreviewUnitSpec {
+  id?: string;
+  name: string;
+  floorNumber: number;
+  blockName?: string;
+  monthlyRent?: number;
+  isCustom?: boolean;
 }
 
 export interface CashBookEntry {

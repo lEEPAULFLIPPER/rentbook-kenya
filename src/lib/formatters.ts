@@ -55,6 +55,21 @@ export function getCurrentMonthKey(): string {
 }
 
 /**
+ * Get previous month string in format YYYY-MM (e.g. given "2026-10" -> "2026-09")
+ */
+export function getPreviousMonthKey(monthKey?: string): string {
+  const current = monthKey || getCurrentMonthKey();
+  const parts = current.split('-');
+  let year = parseInt(parts[0], 10);
+  let month = parseInt(parts[1], 10) - 1;
+  if (month < 1) {
+    month = 12;
+    year -= 1;
+  }
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+/**
  * Clean and format Kenyan phone numbers for tel: and sms:
  */
 export function formatPhoneKE(phone: string | null | undefined): string {
@@ -91,4 +106,12 @@ export function generateRentSMS(
 export function createSmsHref(phone: string, message: string): string {
   const formattedPhone = formatPhoneKE(phone);
   return `sms:${formattedPhone}?body=${encodeURIComponent(message)}`;
+}
+
+/**
+ * Create WhatsApp chat link with prefilled text (Kenyan wa.me)
+ */
+export function createWhatsAppHref(phone: string, message: string): string {
+  const formattedPhone = formatPhoneKE(phone).replace(/^\+/, '');
+  return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
 }

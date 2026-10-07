@@ -22,6 +22,7 @@ export function generateUnitNames(
   const result: GeneratedUnitSpec[] = [];
   const hasBlocks = blocks.length > 0;
   const activeBlocks = hasBlocks ? blocks : [''];
+  const groundConvention = scheme.groundFloorNaming || 'G'; // Kenyan standard: default to 'G'
 
   let globalSequentialIndex = 1;
   let letterOffset = 0;
@@ -33,20 +34,47 @@ export function generateUnitNames(
 
         switch (scheme.type) {
           case 'scheme1': {
-            // Scheme 1: Block + Unit number (Ground = A1..A4, First = B1..B4)
-            const letter = FLOOR_LETTERS[(letterOffset + floor) % FLOOR_LETTERS.length];
+            // Scheme 1: Kenyan Block + Floor letter/prefix + unit index
+            // Kenyan standard: Ground is G (G1..G4) or Ground (Ground 1..4), First is A1..A4
             const blockPrefix = hasBlocks ? `${block.replace(/^Block\s*/i, '')}-` : '';
-            name = `${blockPrefix}${letter}${unitIdx}`;
+
+            if (floor === 0) {
+              if (groundConvention === 'Ground') {
+                name = `${blockPrefix}Ground ${unitIdx}`;
+              } else if (groundConvention === 'GF') {
+                name = `${blockPrefix}GF${unitIdx}`;
+              } else if (groundConvention === 'Letter') {
+                name = `${blockPrefix}A${unitIdx}`;
+              } else {
+                // Default 'G': G1, G2, G3...
+                name = `${blockPrefix}G${unitIdx}`;
+              }
+            } else {
+              // 1st floor onwards: A1..A4, B1..B4, etc. (or offset if Letter convention used for ground)
+              const floorLetterIdx = groundConvention === 'Letter' ? floor : floor - 1;
+              const letter = FLOOR_LETTERS[(letterOffset + floorLetterIdx) % FLOOR_LETTERS.length];
+              name = `${blockPrefix}${letter}${unitIdx}`;
+            }
             break;
           }
 
           case 'scheme2': {
-            // Scheme 2: Floor prefix + number (G1..G4, F1..F4, S1..S4, T1..T4)
+            // Scheme 2: Floor prefix + number (G1..G4 / Ground 1..4, F1..F4, S1..S4, T1..T4)
             let prefix = 'G';
-            if (floor === 1) prefix = 'F';
-            else if (floor === 2) prefix = 'S';
-            else if (floor === 3) prefix = 'T';
-            else if (floor > 3) prefix = `${floor}F`;
+            if (floor === 0) {
+              if (groundConvention === 'Ground') prefix = 'Ground ';
+              else if (groundConvention === 'GF') prefix = 'GF';
+              else if (groundConvention === 'Letter') prefix = 'A';
+              else prefix = 'G';
+            } else if (floor === 1) {
+              prefix = 'F';
+            } else if (floor === 2) {
+              prefix = 'S';
+            } else if (floor === 3) {
+              prefix = 'T';
+            } else {
+              prefix = `${floor}F`;
+            }
 
             const blockPrefix = hasBlocks ? `${block.replace(/^Block\s*/i, '')}-` : '';
             name = `${blockPrefix}${prefix}${unitIdx}`;
@@ -61,9 +89,18 @@ export function generateUnitNames(
           }
 
           case 'scheme4': {
-            // Scheme 4: Floor number + letter (GA..GD or 1A..1D, 2A..2D)
-            const floorLabel = floor === 0 ? 'G' : String(floor);
+            // Scheme 4: Floor label + letter (GA..GD, Ground-A..D, 1A..1D, 2A..2D)
             const unitLetter = String.fromCharCode(64 + unitIdx); // 1->A, 2->B
+            let floorLabel = 'G';
+            if (floor === 0) {
+              if (groundConvention === 'Ground') floorLabel = 'Ground ';
+              else if (groundConvention === 'GF') floorLabel = 'GF';
+              else if (groundConvention === 'Letter') floorLabel = 'A';
+              else floorLabel = 'G';
+            } else {
+              floorLabel = String(floor);
+            }
+
             const blockPrefix = hasBlocks ? `${block.replace(/^Block\s*/i, '')}-` : '';
             name = `${blockPrefix}${floorLabel}${unitLetter}`;
             break;
@@ -73,15 +110,39 @@ export function generateUnitNames(
             // Scheme 5: Word prefix (House 1, House 2 / Unit 1...)
             const word = scheme.prefixWord || 'House';
             const blockPrefix = hasBlocks ? `${block} ` : '';
-            name = `${blockPrefix}${word} ${globalSequentialIndex}`;
+            if (floor === 0 && (groundConvention === 'Ground' || groundConvention === 'G')) {
+              const gPrefix = groundConvention === 'Ground' ? 'Ground ' : 'G-';
+              name = `${blockPrefix}${word} ${gPrefix}${unitIdx}`;
+            } else {
+              name = `${blockPrefix}${word} ${globalSequentialIndex}`;
+            }
             break;
           }
 
           case 'scheme6': {
             // Scheme 6: Custom pattern using tokens
             const pattern = scheme.customPattern || '{block}{floor}{index}';
-            const floorLetter = FLOOR_LETTERS[(letterOffset + floor) % FLOOR_LETTERS.length];
-            const floorLabel = floor === 0 ? 'G' : String(floor);
+            let floorLabel = String(floor);
+            let floorLetter = FLOOR_LETTERS[(letterOffset + floor) % FLOOR_LETTERS.length];
+
+            if (floor === 0) {
+              if (groundConvention === 'Ground') {
+                floorLabel = 'Ground';
+                floorLetter = 'Ground';
+              } else if (groundConvention === 'GF') {
+                floorLabel = 'GF';
+                floorLetter = 'GF';
+              } else if (groundConvention === 'Letter') {
+                floorLabel = 'A';
+                floorLetter = 'A';
+              } else {
+                floorLabel = 'G';
+                floorLetter = 'G';
+              }
+            } else if (groundConvention !== 'Letter') {
+              floorLetter = FLOOR_LETTERS[(letterOffset + floor - 1) % FLOOR_LETTERS.length];
+            }
+
             const unitLetter = String.fromCharCode(64 + unitIdx);
 
             name = pattern
@@ -124,4 +185,12 @@ export function getFloorDisplayName(floorNumber: number): string {
   if (floorNumber === 2) return '2nd Floor';
   if (floorNumber === 3) return '3rd Floor';
   return `${floorNumber}th Floor`;
+}
+
+export function getFloorShortName(floorNumber: number): string {
+  if (floorNumber === 0) return 'Ground';
+  if (floorNumber === 1) return '1st';
+  if (floorNumber === 2) return '2nd';
+  if (floorNumber === 3) return '3rd';
+  return `${floorNumber}th`;
 }

@@ -7,6 +7,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   AlertCircle,
+  MessageCircle,
   MessageSquare,
   Phone,
   Search,
@@ -14,7 +15,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { createSmsHref, formatKES, formatPhoneKE, generateRentSMS } from '../lib/formatters';
+import { createSmsHref, createWhatsAppHref, formatKES, formatPhoneKE, generateRentSMS } from '../lib/formatters';
 
 export const TenantsScreen: React.FC = () => {
   const { tenants, units, tenantArrears, openTenantModal, setCurrentScreen } = useApp();
@@ -147,19 +148,19 @@ export const TenantsScreen: React.FC = () => {
                 </div>
               </div>
 
-              {/* Direct Actions: Call & SMS Reminders */}
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+              {/* Direct Actions: Call, SMS & WhatsApp Reminders */}
+              <div className="flex items-center gap-1.5 pt-2 border-t border-slate-800">
                 <a
                   href={`tel:${formatPhoneKE(tenant.phone)}`}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition min-h-[44px]"
+                  className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition min-h-[44px] flex items-center justify-center shrink-0"
+                  title="Call Tenant"
                 >
                   <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Call</span>
                 </a>
 
                 <a
                   href={createSmsHref(tenant.phone, reminderText)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold border transition min-h-[44px] ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-semibold border transition min-h-[44px] ${
                     owesMoney
                       ? 'bg-rose-950/60 hover:bg-rose-900/60 text-rose-200 border-rose-700/60'
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
@@ -167,7 +168,18 @@ export const TenantsScreen: React.FC = () => {
                   title={reminderText}
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
-                  <span>SMS Notice</span>
+                  <span>SMS</span>
+                </a>
+
+                <a
+                  href={createWhatsAppHref(tenant.phone, reminderText)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-semibold bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-200 border border-emerald-700/60 transition min-h-[44px]"
+                  title="Chat on WhatsApp"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>WhatsApp</span>
                 </a>
               </div>
             </div>

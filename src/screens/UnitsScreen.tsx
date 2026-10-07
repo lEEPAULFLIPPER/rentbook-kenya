@@ -9,7 +9,9 @@ import {
   AlertCircle,
   Building,
   CheckCircle2,
+  DoorOpen,
   Edit2,
+  Key,
   Plus,
   RefreshCw,
   User,
@@ -30,11 +32,44 @@ export const UnitsScreen: React.FC = () => {
     openUnitModal,
     openBulkRenameModal,
     openTenantModal,
+    openPropertyModal,
+    updateUnit,
+    broadcastLiveAction,
   } = useApp();
 
   const { activeRole } = useAuth();
   const [floorFilter, setFloorFilter] = useState<'all' | number>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'occupied' | 'vacant'>('all');
+
+  // 1-Click quick toggle for house status (Vacant <-> Occupied)
+  const handleToggleUnitStatus = async (
+    e: React.MouseEvent,
+    unit: Unit,
+    currentTenant?: { full_name: string }
+  ) => {
+    e.stopPropagation();
+    const nextStatus = unit.status === 'occupied' ? 'vacant' : 'occupied';
+
+    if (unit.status === 'occupied' && currentTenant) {
+      const confirmChange = window.confirm(
+        `House ${unit.name} currently has an active tenant (${currentTenant.full_name}).\n\nAre you sure you want to mark this house as VACANT?`
+      );
+      if (!confirmChange) return;
+    }
+
+    try {
+      await updateUnit({
+        ...unit,
+        status: nextStatus,
+      });
+      broadcastLiveAction(
+        `House ${unit.name} is now marked as ${nextStatus.toUpperCase()}`,
+        nextStatus === 'occupied' ? 'success' : 'info'
+      );
+    } catch (err) {
+      console.error('Failed to toggle unit status', err);
+    }
+  };
 
   // Group units by floor
   const floorGroups = useMemo(() => {
@@ -78,6 +113,15 @@ export const UnitsScreen: React.FC = () => {
         {/* Bulk Actions for Landlord / Admin */}
         {activeRole !== 'caretaker' && currentProperty && (
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openPropertyModal(currentProperty)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition active:scale-95 min-h-[40px]"
+              title="Add, delete, or rename flats and configure floor structure"
+            >
+              <Building className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Configure Flats & Naming</span>
+            </button>
             <button
               type="button"
               onClick={() => openBulkRenameModal(currentProperty.id)}
@@ -215,15 +259,24 @@ export const UnitsScreen: React.FC = () => {
                           </span>
                         </div>
 
-                        <span
-                          className={`px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider font-mono ${
+                        {/* Interactive Status Pill Toggle */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleUnitStatus(e, unit, tenant)}
+                          title={`Click to mark as ${isOccupied ? 'VACANT' : 'OCCUPIED'}`}
+                          className={`px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider font-mono border transition active:scale-95 flex items-center gap-1 ${
                             isOccupied
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                              : 'bg-rose-950 text-rose-300 border border-rose-800'
+                              ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-rose-950/80 hover:text-rose-300 hover:border-rose-700'
+                              : 'bg-rose-950 text-rose-300 border-rose-800 hover:bg-emerald-950/80 hover:text-emerald-300 hover:border-emerald-700'
                           }`}
                         >
-                          {unit.status}
-                        </span>
+                          <span
+                            className={`w-1.5 h-1.5 inline-block ${
+                              isOccupied ? 'bg-emerald-400' : 'bg-rose-400'
+                            }`}
+                          />
+                          <span>{unit.status}</span>
+                        </button>
                       </div>
 
                       {/* Middle: Tenant / Vacant info */}
@@ -245,21 +298,47 @@ export const UnitsScreen: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Bottom: Arrears Alert or Paid Badge */}
-                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
-                        {hasArrears ? (
-                          <div className="flex items-center gap-1 text-rose-400 font-bold">
-                            <AlertCircle className="w-3.5 h-3.5" />
-                            <span>Owes {formatKES(arrearsItem.balance)}</span>
-                          </div>
-                        ) : isOccupied ? (
-                          <div className="flex items-center gap-1 text-emerald-400 font-medium">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Paid Up</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500 text-[10px]">Ready for viewing</span>
-                        )}
+                      {/* Bottom: Arrears Alert or Paid Badge + Dedicated 1-Click Action Button */}
+                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1 text-[11px]">
+                        <div className="min-w-0 flex-1">
+                          {hasArrears ? (
+                            <div className="flex items-center gap-1 text-rose-400 font-bold truncate">
+                              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">Owes {formatKES(arrearsItem.balance)}</span>
+                            </div>
+                          ) : isOccupied ? (
+                            <div className="flex items-center gap-1 text-emerald-400 font-medium truncate">
+                              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                              <span className="truncate">Paid Up</span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 text-[10px]">Ready for viewing</span>
+                          )}
+                        </div>
+
+                        {/* Dedicated 1-Click Set Vacant / Occupied Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleUnitStatus(e, unit, tenant)}
+                          className={`px-2 py-1 text-[10px] font-bold border transition active:scale-95 flex items-center gap-1 shrink-0 ${
+                            isOccupied
+                              ? 'bg-slate-800 hover:bg-rose-950/80 text-slate-300 hover:text-rose-300 border-slate-700 hover:border-rose-700'
+                              : 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border-emerald-700 hover:border-emerald-500'
+                          }`}
+                          title={isOccupied ? 'Set house as Vacant' : 'Set house as Occupied'}
+                        >
+                          {isOccupied ? (
+                            <>
+                              <DoorOpen className="w-3 h-3 text-rose-400" />
+                              <span>Set Vacant</span>
+                            </>
+                          ) : (
+                            <>
+                              <Key className="w-3 h-3 text-emerald-400" />
+                              <span>Set Occupied</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
                   );

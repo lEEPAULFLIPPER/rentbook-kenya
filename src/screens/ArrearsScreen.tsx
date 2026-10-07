@@ -8,12 +8,13 @@ import React, { useState } from 'react';
 import {
   AlertCircle,
   Clock,
+  MessageCircle,
   MessageSquare,
   Phone,
   ShieldAlert,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { createSmsHref, formatKES, formatPhoneKE, generateRentSMS } from '../lib/formatters';
+import { createSmsHref, createWhatsAppHref, formatKES, formatPhoneKE, generateRentSMS } from '../lib/formatters';
 
 export const ArrearsScreen: React.FC = () => {
   const { tenantArrears, setCurrentScreen, openPaymentModal } = useApp();
@@ -177,6 +178,17 @@ export const ArrearsScreen: React.FC = () => {
                         >
                           <MessageSquare className="w-3 h-3 text-rose-400" />
                           <span>SMS</span>
+                        </a>
+
+                        <a
+                          href={createWhatsAppHref(debtor.tenant.phone, reminderMsg)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-950/80 hover:bg-emerald-900/80 text-emerald-200 border border-emerald-700 text-[11px] font-bold transition"
+                          title="Send WhatsApp Reminder"
+                        >
+                          <MessageCircle className="w-3 h-3 text-emerald-400" />
+                          <span>WhatsApp</span>
                         </a>
 
                         <button

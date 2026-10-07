@@ -10,6 +10,7 @@ import {
   Eye,
   Plus,
   Search,
+  Share2,
   SlidersHorizontal,
   UserCheck,
   Wifi,
@@ -34,6 +35,8 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
     isOnline,
     queuedSyncCount,
     setCurrentScreen,
+    openPropertyModal,
+    openClientShareModal,
   } = useApp();
 
   const {
@@ -114,6 +117,19 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
                   <span className="text-[10px] text-slate-400">{prop.floors * prop.units_per_floor} units</span>
                 </button>
               ))}
+              {activeRole !== 'caretaker' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    openPropertyModal();
+                    setIsPropertyDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs flex items-center gap-1.5 text-emerald-400 hover:bg-slate-700/80 border-t border-slate-700 font-semibold transition"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Property & Houses</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -173,6 +189,18 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
           <Plus className="w-3.5 h-3.5 text-amber-400 stroke-[2.5]" />
           <span>Expense</span>
           <span className="hidden xl:inline text-[10px] text-slate-400 font-mono">(E)</span>
+        </button>
+
+        {/* Share with Client Button */}
+        <button
+          type="button"
+          onClick={() => openClientShareModal()}
+          className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-sky-700 hover:bg-sky-600 text-white font-medium text-xs shadow-sm transition active:scale-95 min-h-[36px]"
+          title="Share WhatsApp summary or live link with James"
+        >
+          <Share2 className="w-3.5 h-3.5 stroke-[2.5]" />
+          <span className="font-semibold hidden sm:inline">Share with Client</span>
+          <span className="font-semibold sm:hidden">Share</span>
         </button>
 
         {/* Pending approvals badge */}

@@ -3,23 +3,29 @@
 // Full ledger for one house, inline renaming, tenant call/SMS, payment waterfall
 // =====================================================================
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
   Building,
   CheckCircle2,
   DollarSign,
+  DoorOpen,
   Edit2,
+  Key,
+  MessageCircle,
   MessageSquare,
   Phone,
   Plus,
+  ShieldAlert,
+  ShieldCheck,
+  Trash2,
   User,
   UserPlus,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { createSmsHref, formatKES, formatPhoneKE, generateRentSMS } from '../lib/formatters';
+import { createSmsHref, createWhatsAppHref, formatKES, formatPhoneKE, generateRentSMS } from '../lib/formatters';
 import { getFloorDisplayName } from '../lib/namingEngine';
 
 export const UnitDetailScreen: React.FC = () => {
@@ -33,9 +39,13 @@ export const UnitDetailScreen: React.FC = () => {
     openPaymentModal,
     openTenantModal,
     openUnitModal,
+    updateUnit,
+    deletePayment,
+    broadcastLiveAction,
   } = useApp();
 
   const { activeRole } = useAuth();
+  const [isClosedPeriodVerified, setIsClosedPeriodVerified] = useState<boolean>(false);
 
   const unit = units.find((u) => u.id === selectedUnitId);
   const tenant = tenants.find((t) => t.unit_id === selectedUnitId && !t.move_out_date && !t.deleted_at);
@@ -63,6 +73,47 @@ export const UnitDetailScreen: React.FC = () => {
 
   const isOccupied = unit.status === 'occupied';
 
+  const handleToggleStatus = async () => {
+    if (!unit) return;
+    const nextStatus = isOccupied ? 'vacant' : 'occupied';
+
+    if (isOccupied && tenant) {
+      const confirmChange = window.confirm(
+        `House ${unit.name} currently has an active tenant (${tenant.full_name}).\n\nAre you sure you want to change its status to VACANT?`
+      );
+      if (!confirmChange) return;
+    }
+
+    try {
+      await updateUnit({
+        ...unit,
+        status: nextStatus,
+      });
+      broadcastLiveAction(
+        `House ${unit.name} marked as ${nextStatus.toUpperCase()}`,
+        nextStatus === 'occupied' ? 'success' : 'info'
+      );
+    } catch (err) {
+      console.error('Failed to toggle unit status', err);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId: string, amount: number, ref: string) => {
+    const confirmDelete = window.confirm(
+      `Delete payment record of ${formatKES(amount)} [Ref: ${ref}]?\n\n` +
+      `This will remove the entry and update this house's debt balance immediately.`
+    );
+    if (!confirmDelete) return;
+
+    const res = await deletePayment(
+      paymentId,
+      `Removed misplaced entry of ${formatKES(amount)} for House ${unit?.name || ''}`
+    );
+    if (!res.success) {
+      alert(res.message || 'Failed to delete payment');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 pb-12 select-none">
       {/* 1. TOP NAV BACK & HOUSE HEADER */}
@@ -82,15 +133,23 @@ export const UnitDetailScreen: React.FC = () => {
               <h1 className="text-lg sm:text-xl font-black text-slate-100 font-mono tracking-tight">
                 House {unit.name}
               </h1>
-              <span
-                className={`px-2 py-0.5 text-[10px] font-bold uppercase font-mono ${
+              <button
+                type="button"
+                onClick={handleToggleStatus}
+                title={`Click to switch to ${isOccupied ? 'VACANT' : 'OCCUPIED'}`}
+                className={`px-2 py-0.5 text-[10px] font-bold uppercase font-mono border transition active:scale-95 flex items-center gap-1 ${
                   isOccupied
-                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                    : 'bg-rose-950 text-rose-300 border border-rose-800'
+                    ? 'bg-emerald-950 text-emerald-300 border-emerald-800 hover:bg-rose-950/80 hover:text-rose-300 hover:border-rose-700'
+                    : 'bg-rose-950 text-rose-300 border-rose-800 hover:bg-emerald-950/80 hover:text-emerald-300 hover:border-emerald-700'
                 }`}
               >
-                {unit.status}
-              </span>
+                <span
+                  className={`w-1.5 h-1.5 inline-block ${
+                    isOccupied ? 'bg-emerald-400' : 'bg-rose-400'
+                  }`}
+                />
+                <span>{unit.status}</span>
+              </button>
               {activeRole !== 'caretaker' && (
                 <button
                   type="button"
@@ -111,6 +170,28 @@ export const UnitDetailScreen: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleToggleStatus}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border transition active:scale-95 min-h-[44px] ${
+              isOccupied
+                ? 'bg-slate-800 hover:bg-rose-950/80 text-slate-300 hover:text-rose-300 border-slate-700 hover:border-rose-700'
+                : 'bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border-emerald-700 hover:border-emerald-500'
+            }`}
+            title={isOccupied ? 'Mark house as Vacant' : 'Mark house as Occupied'}
+          >
+            {isOccupied ? (
+              <>
+                <DoorOpen className="w-4 h-4 text-rose-400" />
+                <span>Mark Vacant</span>
+              </>
+            ) : (
+              <>
+                <Key className="w-4 h-4 text-emerald-400" />
+                <span>Mark Occupied</span>
+              </>
+            )}
+          </button>
           <button
             type="button"
             onClick={() => openPaymentModal({ unitId: unit.id, tenantId: tenant?.id })}
@@ -164,11 +245,12 @@ export const UnitDetailScreen: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Direct Mobile Call & SMS Buttons */}
+                  {/* Direct Mobile Call, SMS & WhatsApp Buttons */}
                   <div className="flex items-center gap-2">
                     <a
                       href={`tel:${formatPhoneKE(tenant.phone)}`}
                       className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition min-h-[44px]"
+                      title="Call Tenant"
                     >
                       <Phone className="w-3.5 h-3.5 text-emerald-400" />
                       <span>Call</span>
@@ -185,9 +267,29 @@ export const UnitDetailScreen: React.FC = () => {
                         )
                       )}
                       className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition min-h-[44px]"
+                      title="Send SMS Reminder"
                     >
                       <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
-                      <span>SMS Reminder</span>
+                      <span>SMS</span>
+                    </a>
+
+                    <a
+                      href={createWhatsAppHref(
+                        tenant.phone,
+                        generateRentSMS(
+                          'sw',
+                          unit.name,
+                          arrearsItem ? arrearsItem.balance : unit.monthly_rent,
+                          tenant.full_name
+                        )
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-emerald-950/70 hover:bg-emerald-900/70 text-emerald-200 border border-emerald-700/60 text-xs font-semibold transition min-h-[44px]"
+                      title="Send WhatsApp Notice"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>WhatsApp</span>
                     </a>
                   </div>
                 </div>
@@ -259,9 +361,39 @@ export const UnitDetailScreen: React.FC = () => {
 
       {/* 3. PAYMENT HISTORY LEDGER FOR THIS HOUSE */}
       <div className="bg-slate-900 border border-slate-800 p-4">
-        <h3 className="font-bold text-xs text-slate-200 uppercase tracking-wider mb-3">
-          Payment History for House {unit.name} ({unitPayments.length} Records)
-        </h3>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h3 className="font-bold text-xs text-slate-200 uppercase tracking-wider">
+            Payment History for House {unit.name} ({unitPayments.length} Records)
+          </h3>
+
+          {/* Verify Closed Period Option Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsClosedPeriodVerified(!isClosedPeriodVerified)}
+            className={`px-2.5 py-1 text-[11px] font-bold border transition flex items-center gap-1.5 active:scale-95 ${
+              isClosedPeriodVerified
+                ? 'bg-rose-700 text-white border-rose-500 font-black'
+                : 'bg-slate-800 text-slate-300 hover:text-white border-slate-700'
+            }`}
+            title={
+              isClosedPeriodVerified
+                ? 'Click to lock closed period and hide delete icons'
+                : 'Verify closed period to unlock record deletion for misplaced entries'
+            }
+          >
+            {isClosedPeriodVerified ? (
+              <>
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Verified (Delete Active 🗑️)</span>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>Verify Closed Period</span>
+              </>
+            )}
+          </button>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
@@ -274,6 +406,9 @@ export const UnitDetailScreen: React.FC = () => {
                 <th className="px-3 py-2 text-right">Amount Paid</th>
                 <th className="px-3 py-2">Recorded By</th>
                 <th className="px-3 py-2 text-center">Status</th>
+                {isClosedPeriodVerified && (
+                  <th className="px-3 py-2 text-center">Action</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
@@ -298,11 +433,25 @@ export const UnitDetailScreen: React.FC = () => {
                       {pay.status}
                     </span>
                   </td>
+                  {isClosedPeriodVerified && (
+                    <td className="px-3 py-2 text-center">
+                      {(activeRole !== 'caretaker' || pay.status === 'pending') && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePayment(pay.id, pay.amount, pay.reference)}
+                          className="p-1 text-rose-300 hover:text-white bg-rose-950/80 hover:bg-rose-900 border border-rose-800 transition"
+                          title="Delete misplaced payment record"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
               {unitPayments.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-6 text-center text-slate-500 italic">
+                  <td colSpan={isClosedPeriodVerified ? 8 : 7} className="px-3 py-6 text-center text-slate-500 italic">
                     No payment history recorded yet for this house.
                   </td>
                 </tr>

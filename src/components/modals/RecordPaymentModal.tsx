@@ -3,13 +3,27 @@
 // Big touch buttons, M-Pesa toggles, waterfall arrears pre-fill, receipt camera
 // =====================================================================
 
-import React, { useEffect, useState } from 'react';
-import { Camera, Check, CreditCard, DollarSign } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  AlertTriangle,
+  Camera,
+  Check,
+  CreditCard,
+  DollarSign,
+  History,
+  Lock,
+  ShieldAlert,
+} from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
 import { PaymentMethod } from '../../types';
-import { formatKES, getCurrentMonthKey } from '../../lib/formatters';
+import {
+  formatKES,
+  formatMonthName,
+  getCurrentMonthKey,
+  getPreviousMonthKey,
+} from '../../lib/formatters';
 
 export const RecordPaymentModal: React.FC = () => {
   const {
@@ -18,6 +32,7 @@ export const RecordPaymentModal: React.FC = () => {
     paymentPrefill,
     units,
     tenants,
+    payments,
     recordPayment,
     tenantArrears,
     settings,
@@ -34,6 +49,10 @@ export const RecordPaymentModal: React.FC = () => {
   const [note, setNote] = useState<string>('');
   const [receiptPhotoName, setReceiptPhotoName] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasPastPermission, setHasPastPermission] = useState(false);
+
+  const currentMonthKey = getCurrentMonthKey();
+  const isPastMonth = Boolean(coversMonth && coversMonth < currentMonthKey);
 
   // Initialize or update fields when modal opens
   useEffect(() => {
@@ -50,6 +69,11 @@ export const RecordPaymentModal: React.FC = () => {
       setReference('');
       setNote('');
       setReceiptPhotoName('');
+      setHasPastPermission(false);
+
+      if (paymentPrefill?.coversMonth) {
+        setCoversMonth(paymentPrefill.coversMonth);
+      }
     }
   }, [isPaymentModalOpen, paymentPrefill, units]);
 
@@ -61,7 +85,9 @@ export const RecordPaymentModal: React.FC = () => {
     const tenant = tenants.find((t) => t.unit_id === selectedUnitId && !t.move_out_date && !t.deleted_at);
     const arrearsItem = tenantArrears.find((a) => a.unit.id === selectedUnitId);
 
-    if (arrearsItem && arrearsItem.balance > 0) {
+    if (paymentPrefill?.coversMonth) {
+      setCoversMonth(paymentPrefill.coversMonth);
+    } else if (arrearsItem && arrearsItem.balance > 0) {
       // Pre-fill with outstanding debt or standard rent
       setAmount(String(unit?.monthly_rent || 0));
       setCoversMonth(arrearsItem.oldest_unpaid_month);
@@ -69,13 +95,57 @@ export const RecordPaymentModal: React.FC = () => {
       setAmount(String(unit.monthly_rent));
       setCoversMonth(getCurrentMonthKey());
     }
-  }, [selectedUnitId, units, tenants, tenantArrears]);
+  }, [selectedUnitId, units, tenants, tenantArrears, paymentPrefill]);
+
+  // Reset past permission whenever coversMonth changes
+  useEffect(() => {
+    setHasPastPermission(false);
+  }, [coversMonth, selectedUnitId]);
 
   const activeTenant = tenants.find(
     (t) => t.unit_id === selectedUnitId && !t.move_out_date && !t.deleted_at
   );
   const selectedUnit = units.find((u) => u.id === selectedUnitId);
   const arrearsInfo = tenantArrears.find((a) => a.unit.id === selectedUnitId);
+
+  // Past Month Audit Inspection
+  const pastMonthAudit = useMemo(() => {
+    if (!isPastMonth || !selectedUnitId) return null;
+    const monthlyRent = selectedUnit?.monthly_rent || 0;
+
+    const existingForMonth = payments.filter(
+      (p) =>
+        !p.deleted_at &&
+        p.covers_month === coversMonth &&
+        p.unit_id === selectedUnitId &&
+        p.status !== 'rejected' &&
+        p.status !== 'void'
+    );
+    const alreadyPaidForMonth = existingForMonth.reduce((sum, p) => sum + p.amount, 0);
+    const shortfall = monthlyRent - alreadyPaidForMonth;
+
+    // Check next months overpayments
+    const subsequentPayments = payments.filter(
+      (p) =>
+        !p.deleted_at &&
+        p.covers_month > coversMonth &&
+        p.unit_id === selectedUnitId &&
+        p.status !== 'rejected' &&
+        p.status !== 'void'
+    );
+    const currentTotalDebt = arrearsInfo ? arrearsInfo.balance : 0;
+    const possibleOverpaySettlement = shortfall > 0 && currentTotalDebt < shortfall;
+
+    return {
+      monthlyRent,
+      existingForMonth,
+      alreadyPaidForMonth,
+      shortfall,
+      subsequentPaymentsCount: subsequentPayments.length,
+      currentTotalDebt,
+      possibleOverpaySettlement,
+    };
+  }, [isPastMonth, coversMonth, selectedUnitId, selectedUnit, payments, arrearsInfo]);
 
   const numAmount = parseFloat(amount) || 0;
   const projectedBalance = arrearsInfo ? arrearsInfo.balance - numAmount : 0;
@@ -92,8 +162,22 @@ export const RecordPaymentModal: React.FC = () => {
       return;
     }
 
+    if (isPastMonth && !hasPastPermission) {
+      alert(
+        `Audit Permission Required: You are recording rent for ${formatMonthName(coversMonth)} (a past month). Please review the historical audit records below and check the permission box to authorize posting.`
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      const backdatedTag = isPastMonth
+        ? `[Backdated to ${coversMonth}${activeRole === 'caretaker' ? ' · Caretaker entry pending review' : ' · Admin authorized'}]`
+        : '';
+      const finalNote = note.trim()
+        ? backdatedTag ? `${note.trim()} ${backdatedTag}` : note.trim()
+        : backdatedTag || undefined;
+
       const res = await recordPayment({
         unit_id: selectedUnitId,
         tenant_id: activeTenant ? activeTenant.id : 'unassigned',
@@ -102,7 +186,7 @@ export const RecordPaymentModal: React.FC = () => {
         method,
         reference: reference.trim().toUpperCase(),
         covers_month: coversMonth,
-        note: note.trim() || undefined,
+        note: finalNote,
         receipt_url: receiptPhotoName ? `receipts/${receiptPhotoName}` : null,
       });
 
@@ -289,6 +373,110 @@ export const RecordPaymentModal: React.FC = () => {
             </label>
           </div>
         </div>
+
+        {/* PAST MONTH AUDIT INSPECTION & PERMISSION GATE */}
+        {isPastMonth && pastMonthAudit && (
+          <div className="bg-amber-950/30 border border-amber-600/70 p-3 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <div className="font-bold text-xs text-amber-300 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Historical Month Audit: {formatMonthName(coversMonth)}</span>
+              </div>
+              <span className="px-2 py-0.5 bg-amber-900/60 text-amber-200 border border-amber-700 font-mono text-[10px] font-bold">
+                Closed Period
+              </span>
+            </div>
+
+            <div className="text-[11px] text-amber-200/90 leading-relaxed">
+              You are recording rent for a past month. Tenants often underpay one month then overpay in a subsequent month. Review the audited ledger below before posting:
+            </div>
+
+            {/* Audit Figures */}
+            <div className="grid grid-cols-3 gap-2 bg-slate-900/90 p-2.5 border border-slate-700/80 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase">Standard Rent</span>
+                <span className="font-mono font-bold text-slate-200">
+                  {formatKES(pastMonthAudit.monthlyRent)}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase">Already Paid</span>
+                <span className="font-mono font-bold text-emerald-400">
+                  {formatKES(pastMonthAudit.alreadyPaidForMonth)}
+                </span>
+                <span className="text-[10px] text-slate-400 block">
+                  ({pastMonthAudit.existingForMonth.length} {pastMonthAudit.existingForMonth.length === 1 ? 'record' : 'records'})
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] text-slate-400 block uppercase">Original Delta</span>
+                <span
+                  className={`font-mono font-bold ${
+                    pastMonthAudit.shortfall > 0
+                      ? 'text-rose-400'
+                      : pastMonthAudit.shortfall < 0
+                      ? 'text-emerald-400'
+                      : 'text-slate-300'
+                  }`}
+                >
+                  {pastMonthAudit.shortfall > 0
+                    ? `Underpaid ${formatKES(pastMonthAudit.shortfall)}`
+                    : pastMonthAudit.shortfall < 0
+                    ? `Overpaid ${formatKES(-pastMonthAudit.shortfall)}`
+                    : 'Fully Settled'}
+                </span>
+              </div>
+            </div>
+
+            {/* Existing records for that month if any */}
+            {pastMonthAudit.existingForMonth.length > 0 && (
+              <div className="bg-slate-900/60 p-2 border border-slate-800 text-[11px]">
+                <span className="text-slate-400 font-semibold block mb-1">
+                  Existing Payments Logged for {formatMonthName(coversMonth)}:
+                </span>
+                <div className="space-y-1">
+                  {pastMonthAudit.existingForMonth.map((p) => (
+                    <div key={p.id} className="flex justify-between text-slate-300 font-mono text-[10px]">
+                      <span>{p.date} · {p.method} ({p.reference})</span>
+                      <span className="text-emerald-400 font-bold">{formatKES(p.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Subsequent Overpayment Alert */}
+            {pastMonthAudit.possibleOverpaySettlement && (
+              <div className="bg-rose-950/40 border border-rose-600/60 p-2 text-[11px] text-rose-200 flex items-start gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Overpayment Settlement Warning:</strong> The tenant's current total debt across all months is only {formatKES(pastMonthAudit.currentTotalDebt)}, which is less than this month's shortfall of {formatKES(pastMonthAudit.shortfall)}. A subsequent month payment may have already settled this debt. Adding another payment here will create an excess surplus!
+                </span>
+              </div>
+            )}
+
+            {activeRole === 'caretaker' && (
+              <div className="text-[11px] text-amber-300 bg-amber-900/30 p-2 border border-amber-700/50">
+                🔒 <strong>Caretaker Notice:</strong> Backdated entries are recorded as pending and must be reviewed and approved by the Landlord/Admin.
+              </div>
+            )}
+
+            {/* Permission Checkbox */}
+            <label className="flex items-start gap-2 pt-1 cursor-pointer select-none text-[11px] text-amber-200">
+              <input
+                type="checkbox"
+                checked={hasPastPermission}
+                onChange={(e) => setHasPastPermission(e.target.checked)}
+                className="mt-0.5 text-emerald-500 focus:ring-emerald-500"
+              />
+              <span>
+                <strong>I have inspected the records above and confirm authorization</strong> to post a backdated payment for {formatMonthName(coversMonth)}.
+              </span>
+            </label>
+          </div>
+        )}
 
         {/* Note */}
         <div>
