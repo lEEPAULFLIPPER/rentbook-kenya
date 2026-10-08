@@ -1,10 +1,6 @@
-// =====================================================================
-// RENTBOOK KENYA — CORE APP CONTEXT & STATE ENGINE
-// Real-time synchronization, role-scoped queries, waterfall arrears,
-// approvals workflow, audit logging, and offline queueing
-// =====================================================================
+// RentBook Kenya - Core Application Context & Real-Time State Engine
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppSettings,
   AuditLog,
@@ -365,44 +361,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const isHydratedRef = useRef(false);
+
   // Initial Database Hydration (SQLite -> Supabase -> IndexedDB)
   useEffect(() => {
     const initDatabase = async () => {
-      // 1. Try SQLite Local Server API
-      const stats = await DatabaseService.checkSqliteHealth();
-      if (stats) {
-        setSqliteStats(stats);
-        setActiveDatabaseEngine('sqlite');
-        const sqliteData = await DatabaseService.pullAllFromSqlite();
-        if (sqliteData && sqliteData.properties && sqliteData.properties.length > 0) {
-          setProperties(sqliteData.properties);
-          setSelectedPropertyId((cur) => sqliteData.properties.some((p) => p.id === cur) ? cur : sqliteData.properties[0].id);
-          if (sqliteData.units) setUnits(sqliteData.units);
-          if (sqliteData.tenants) setTenants(sqliteData.tenants);
-          if (sqliteData.payments) setPayments(sqliteData.payments);
-          if (sqliteData.expenses) setExpenses(sqliteData.expenses);
-          if (sqliteData.auditLogs) setAuditLogs(sqliteData.auditLogs);
-          broadcastLiveAction(`Loaded from SQLite Database (${stats.database_file.split('/').pop()} · ${stats.file_size_kb} KB)`, 'success');
+      try {
+        // 1. Try SQLite Local Server API
+        const stats = await DatabaseService.checkSqliteHealth();
+        if (stats) {
+          setSqliteStats(stats);
+          setActiveDatabaseEngine('sqlite');
+          const sqliteData = await DatabaseService.pullAllFromSqlite();
+          if (sqliteData && sqliteData.properties && sqliteData.properties.length > 0) {
+            setProperties(sqliteData.properties);
+            setSelectedPropertyId((cur) => sqliteData.properties.some((p) => p.id === cur) ? cur : sqliteData.properties[0].id);
+            if (sqliteData.units) setUnits(sqliteData.units);
+            if (sqliteData.tenants) setTenants(sqliteData.tenants);
+            if (sqliteData.payments) setPayments(sqliteData.payments);
+            if (sqliteData.expenses) setExpenses(sqliteData.expenses);
+            if (sqliteData.auditLogs) setAuditLogs(sqliteData.auditLogs);
+            isHydratedRef.current = true;
+            broadcastLiveAction(`Loaded from SQLite Database (${stats.database_file.split('/').pop()} · ${stats.file_size_kb} KB)`, 'success');
+            return;
+          }
+        }
+
+        // 2. Try Supabase Cloud
+        if (isSupabaseConfigured() && supabase) {
+          setActiveDatabaseEngine('supabase');
+          await fetchCloudData();
+          isHydratedRef.current = true;
           return;
         }
-      }
 
-      // 2. Try Supabase Cloud
-      if (isSupabaseConfigured() && supabase) {
-        setActiveDatabaseEngine('supabase');
-        fetchCloudData();
-        return;
-      }
-
-      // 3. Fallback to IndexedDB
-      setActiveDatabaseEngine('indexeddb');
-      const idbData = await loadFullSnapshotFromIDB();
-      if (idbData.properties && idbData.properties.length > 0) {
-        setProperties(idbData.properties as Property[]);
-        if (idbData.units) setUnits(idbData.units as Unit[]);
-        if (idbData.tenants) setTenants(idbData.tenants as Tenant[]);
-        if (idbData.payments) setPayments(idbData.payments as Payment[]);
-        if (idbData.expenses) setExpenses(idbData.expenses as Expense[]);
+        // 3. Fallback to IndexedDB
+        setActiveDatabaseEngine('indexeddb');
+        const idbData = await loadFullSnapshotFromIDB();
+        if (idbData.properties && idbData.properties.length > 0) {
+          setProperties(idbData.properties as Property[]);
+          if (idbData.units) setUnits(idbData.units as Unit[]);
+          if (idbData.tenants) setTenants(idbData.tenants as Tenant[]);
+          if (idbData.payments) setPayments(idbData.payments as Payment[]);
+          if (idbData.expenses) setExpenses(idbData.expenses as Expense[]);
+        }
+      } finally {
+        isHydratedRef.current = true;
       }
     };
 
@@ -421,6 +425,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       settings,
     });
   }, [properties, units, tenants, payments, expenses, auditLogs, settings]);
+
+  // Continuous persistence to SQLite relational database
+  useEffect(() => {
+    if (!isHydratedRef.current || properties.length === 0) return;
+    const timer = setTimeout(async () => {
+      try {
+        await DatabaseService.pushAllToSqlite({
+          properties,
+          units,
+          tenants,
+          payments,
+          expenses,
+        });
+      } catch (err) {
+        console.warn('Background sync to SQLite failed:', err);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [properties, units, tenants, payments, expenses]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -1265,6 +1288,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (activeRole !== 'admin') return;
     const target = properties.find((p) => p.id === propId);
     setProperties((prev) => prev.filter((p) => p.id !== propId));
+    DatabaseService.deleteRecord('properties' as any, propId);
     if (isSupabaseConfigured() && supabase) {
       supabase.from('properties').delete().eq('id', propId);
     }
@@ -1378,6 +1402,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setUnits((prev) => prev.filter((u) => u.id !== unitId));
+    DatabaseService.deleteRecord('units', unitId);
     if (isSupabaseConfigured() && supabase) {
       supabase.from('units').delete().eq('id', unitId);
     }
@@ -1459,6 +1484,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteTenant = async (tenantId: string) => {
     const target = tenants.find((t) => t.id === tenantId);
     setTenants((prev) => prev.filter((t) => t.id !== tenantId));
+    DatabaseService.deleteRecord('tenants', tenantId);
     if (isSupabaseConfigured() && supabase) {
       supabase.from('tenants').delete().eq('id', tenantId);
     }
@@ -1650,6 +1676,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Set 10-second undo window
     const snapshot = [...payments];
     setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+    DatabaseService.deleteRecord('payments', paymentId);
 
     if (isSupabaseConfigured() && supabase) {
       supabase.from('payments').update({
@@ -1729,6 +1756,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteExpense = async (expenseId: string) => {
     if (activeRole === 'caretaker') return;
     setExpenses((prev) => prev.filter((e) => e.id !== expenseId));
+    DatabaseService.deleteRecord('expenses', expenseId);
     if (isSupabaseConfigured() && supabase) {
       supabase.from('expenses').update({ deleted_at: new Date().toISOString() }).eq('id', expenseId);
     }

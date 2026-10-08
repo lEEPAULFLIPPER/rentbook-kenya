@@ -89,7 +89,7 @@ class RentBookApiHandler(BaseHTTPRequestHandler):
                 cur.execute("SELECT * FROM properties ORDER BY created_at DESC;")
                 properties = [dict(r) for r in cur.fetchall()]
 
-                cur.execute("SELECT * FROM units ORDER BY floor_number ASC, name ASC;")
+                cur.execute("SELECT * FROM units WHERE deleted_at IS NULL OR deleted_at = '' ORDER BY floor_number ASC, name ASC;")
                 units = [dict(r) for r in cur.fetchall()]
 
                 cur.execute("SELECT * FROM tenants WHERE deleted_at IS NULL OR deleted_at = '';")
