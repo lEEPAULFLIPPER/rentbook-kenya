@@ -12,6 +12,8 @@ import {
   Search,
   Share2,
   SlidersHorizontal,
+  Sparkles,
+  Database,
   UserCheck,
   Wifi,
   WifiOff,
@@ -37,6 +39,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
     setCurrentScreen,
     openPropertyModal,
     openClientShareModal,
+    activeDatabaseEngine,
+    openClientMockupModal,
+    isPresentationMode,
+    togglePresentationMode,
   } = useApp();
 
   const {
@@ -196,11 +202,39 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
           type="button"
           onClick={() => openClientShareModal()}
           className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-sky-700 hover:bg-sky-600 text-white font-medium text-xs shadow-sm transition active:scale-95 min-h-[36px]"
-          title="Share WhatsApp summary or live link with James"
+          title="Share WhatsApp summary or live link with client"
         >
           <Share2 className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span className="font-semibold hidden sm:inline">Share with Client</span>
+          <span className="font-semibold hidden sm:inline">Share</span>
           <span className="font-semibold sm:hidden">Share</span>
+        </button>
+
+        {/* Database Cockpit & Mockup Setup */}
+        <button
+          type="button"
+          onClick={() => openClientMockupModal()}
+          className="hidden md:flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700/80 transition active:scale-95 min-h-[36px]"
+          title="SQLite Database & Client Mockup Setup"
+        >
+          <Database className={`w-3.5 h-3.5 ${activeDatabaseEngine === 'sqlite' ? 'text-emerald-400' : 'text-sky-400'}`} />
+          <span className="hidden lg:inline">
+            {activeDatabaseEngine === 'sqlite' ? 'SQLite DB' : activeDatabaseEngine === 'supabase' ? 'Supabase' : 'Offline DB'}
+          </span>
+        </button>
+
+        {/* Pitch Mode Toggle */}
+        <button
+          type="button"
+          onClick={() => togglePresentationMode()}
+          className={`hidden sm:flex items-center gap-1 px-2 sm:px-2.5 py-1.5 border text-xs font-semibold transition active:scale-95 min-h-[36px] ${
+            isPresentationMode
+              ? 'bg-emerald-950 text-emerald-200 border-emerald-600'
+              : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700'
+          }`}
+          title="Toggle Client Mockup Presentation Mode"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden lg:inline">{isPresentationMode ? 'Pitch Active' : 'Pitch Mode'}</span>
         </button>
 
         {/* Pending approvals badge */}

@@ -47,11 +47,7 @@ export const ClientShareModal: React.FC<ClientShareModalProps> = ({ isOpen, onCl
   });
 
   // Base URL for link generation
-  const defaultBaseUrl = typeof window !== 'undefined'
-    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'https://authority-outputs-linear-belongs.trycloudflare.com'
-        : window.location.origin)
-    : 'https://authority-outputs-linear-belongs.trycloudflare.com';
+  const defaultBaseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://rentbook-kenya.vercel.app';
 
   const [customHost, setCustomHost] = useState<string>(defaultBaseUrl);
   const [copiedText, setCopiedText] = useState<'whatsapp' | 'link' | null>(null);

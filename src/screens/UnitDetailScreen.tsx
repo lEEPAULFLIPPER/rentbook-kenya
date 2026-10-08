@@ -19,6 +19,7 @@ import {
   Plus,
   ShieldAlert,
   ShieldCheck,
+  Printer,
   Trash2,
   User,
   UserPlus,
@@ -39,6 +40,7 @@ export const UnitDetailScreen: React.FC = () => {
     openPaymentModal,
     openTenantModal,
     openUnitModal,
+    openReceiptModal,
     updateUnit,
     deletePayment,
     broadcastLiveAction,
@@ -406,6 +408,7 @@ export const UnitDetailScreen: React.FC = () => {
                 <th className="px-3 py-2 text-right">Amount Paid</th>
                 <th className="px-3 py-2">Recorded By</th>
                 <th className="px-3 py-2 text-center">Status</th>
+                <th className="px-3 py-2 text-center">Receipt</th>
                 {isClosedPeriodVerified && (
                   <th className="px-3 py-2 text-center">Action</th>
                 )}
@@ -433,6 +436,16 @@ export const UnitDetailScreen: React.FC = () => {
                       {pay.status}
                     </span>
                   </td>
+                  <td className="px-3 py-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => openReceiptModal(pay)}
+                      className="p-1 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+                      title="View / Print Official Rent Receipt"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-sky-400" />
+                    </button>
+                  </td>
                   {isClosedPeriodVerified && (
                     <td className="px-3 py-2 text-center">
                       {(activeRole !== 'caretaker' || pay.status === 'pending') && (
@@ -451,7 +464,7 @@ export const UnitDetailScreen: React.FC = () => {
               ))}
               {unitPayments.length === 0 && (
                 <tr>
-                  <td colSpan={isClosedPeriodVerified ? 8 : 7} className="px-3 py-6 text-center text-slate-500 italic">
+                  <td colSpan={isClosedPeriodVerified ? 9 : 8} className="px-3 py-6 text-center text-slate-500 italic">
                     No payment history recorded yet for this house.
                   </td>
                 </tr>

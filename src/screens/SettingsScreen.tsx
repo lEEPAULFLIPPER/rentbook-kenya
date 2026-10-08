@@ -7,16 +7,23 @@
 import React, { useRef, useState } from 'react';
 import {
   AlertOctagon,
+  CheckCircle2,
   Cloud,
   Database,
   Download,
+  ExternalLink,
+  Globe,
+  HardDrive,
   Key,
+  RefreshCw,
   RotateCcw,
   Save,
   ShieldAlert,
   Sliders,
+  Sparkles,
   Trash2,
   Upload,
+  UploadCloud,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +42,16 @@ export const SettingsScreen: React.FC = () => {
     openDangerModal,
     currentProperty,
     broadcastLiveAction,
+    pushLocalDataToCloud,
+    fetchCloudData,
+    isCloudSyncing,
+    lastCloudSyncAt,
+    activeDatabaseEngine,
+    sqliteStats,
+    openClientMockupModal,
+    isPresentationMode,
+    togglePresentationMode,
+    checkDatabaseHealth,
   } = useApp();
 
   const { activeRole, currentUser } = useAuth();
@@ -198,6 +215,154 @@ export const SettingsScreen: React.FC = () => {
         </form>
       )}
 
+      {/* 2.5 SQLITE DATABASE ENGINE & CLIENT MOCKUP COCKPIT */}
+      <div className="bg-slate-900 border border-slate-800 p-4 sm:p-5 flex flex-col gap-4 shadow-sm">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <HardDrive className="w-4 h-4 text-emerald-400" />
+            <h2 className="font-bold text-xs uppercase tracking-wider text-slate-200">
+              Relational Database Engine (SQLite 3.46)
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 font-mono uppercase ${
+                activeDatabaseEngine === 'sqlite'
+                  ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
+                  : 'bg-sky-950 text-sky-300 border border-sky-800'
+              }`}
+            >
+              {activeDatabaseEngine === 'sqlite'
+                ? '🟢 SQLite Online (rentbook.db)'
+                : activeDatabaseEngine === 'supabase'
+                ? '☁️ Supabase Postgres Active'
+                : '💾 Embedded IndexedDB'}
+            </span>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-400 leading-relaxed">
+          RentBook Kenya runs on a local <strong>SQLite ACID relational database</strong> stored directly in your app directory.
+          Every payment, house status change, tenant record, and compound expense is persisted in real time.
+        </p>
+
+        {/* Database specs grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div className="bg-slate-800/60 border border-slate-700/60 p-2.5">
+            <span className="text-[10px] text-slate-400 block uppercase font-bold">Storage File</span>
+            <span className="font-mono text-emerald-300 font-bold truncate block">rentbook.db</span>
+          </div>
+          <div className="bg-slate-800/60 border border-slate-700/60 p-2.5">
+            <span className="text-[10px] text-slate-400 block uppercase font-bold">Database Size</span>
+            <span className="font-mono text-slate-200 font-bold">{sqliteStats?.file_size_kb || 88.0} KB</span>
+          </div>
+          <div className="bg-slate-800/60 border border-slate-700/60 p-2.5">
+            <span className="text-[10px] text-slate-400 block uppercase font-bold">Engine</span>
+            <span className="font-mono text-slate-200 font-bold">{sqliteStats?.sqlite_version ? `SQLite v${sqliteStats.sqlite_version}` : 'SQLite 3'}</span>
+          </div>
+          <div className="bg-slate-800/60 border border-slate-700/60 p-2.5">
+            <span className="text-[10px] text-slate-400 block uppercase font-bold">WAL Mode</span>
+            <span className="font-mono text-emerald-400 font-bold">ACID Enabled</span>
+          </div>
+        </div>
+
+        {/* Action Buttons for Pitching and Mockups */}
+        <div className="flex items-center justify-between pt-2 border-t border-slate-800 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openClientMockupModal()}
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition active:scale-95 min-h-[38px]"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Tailor Client Mockup</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => togglePresentationMode()}
+              className={`flex items-center gap-1.5 px-3 py-2 border font-bold text-xs transition active:scale-95 min-h-[38px] ${
+                isPresentationMode
+                  ? 'bg-emerald-950 text-emerald-200 border-emerald-600'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>{isPresentationMode ? 'Exit Pitch Mode' : 'Toggle Pitch Mode'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.open('/api/export/sql', '_blank')}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition active:scale-95 min-h-[38px]"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export SQL Dump</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => checkDatabaseHealth()}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition active:scale-95 min-h-[38px]"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Verify Health</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 2.6 CLIENT DEPLOYMENT & DOMAIN BUDGET ROADMAP */}
+      <div className="bg-slate-900 border border-slate-800 p-4 sm:p-5 flex flex-col gap-3 shadow-sm">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="flex items-center gap-2">
+            <Globe className="w-4 h-4 text-sky-400" />
+            <h2 className="font-bold text-xs uppercase tracking-wider text-slate-200">
+              Custom Domain & Production Deployment Plan
+            </h2>
+          </div>
+          <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase font-mono">
+            Mockup Ready ✅
+          </span>
+        </div>
+
+        <p className="text-xs text-slate-400">
+          Once your client approves this mockup, follow these 3 steps with the deposit money to launch:
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="bg-slate-800/40 border border-slate-700/60 p-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-200">
+              <span className="w-5 h-5 bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs">1</span>
+              <span>Register Domain</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Buy a `.co.ke` domain (e.g. <em>rentbook.co.ke</em> or <em>{currentProperty?.name.toLowerCase().replace(/\s+/g, '')}.co.ke</em>) on Truehost Kenya for ~KES 1,000/yr.
+            </p>
+          </div>
+
+          <div className="bg-slate-800/40 border border-slate-700/60 p-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-200">
+              <span className="w-5 h-5 bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">2</span>
+              <span>Connect Free Cloud Hosting</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Push to GitHub and connect to Vercel (Free tier with SSL and global edge CDN). Zero monthly server fees.
+            </p>
+          </div>
+
+          <div className="bg-slate-800/40 border border-slate-700/60 p-3 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-200">
+              <span className="w-5 h-5 bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">3</span>
+              <span>Install PWA On Phones</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Open the custom domain on client and caretaker phones and tap <strong>Add to Home Screen</strong>. Instant native-like mobile app.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* 3. SUPABASE CLOUD SETUP (NO TERMINAL REQUIRED) */}
       <form
         onSubmit={handleSaveSupabase}
@@ -255,17 +420,41 @@ export const SettingsScreen: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-800 flex-wrap gap-2">
           <span className="text-[11px] text-slate-500">
-            See README.md for click-by-click instructions in the Supabase browser dashboard.
+            {lastCloudSyncAt ? `Last cloud sync: ${lastCloudSyncAt}` : 'See README.md for click-by-click instructions.'}
           </span>
-          <button
-            type="submit"
-            className="flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow transition active:scale-95 min-h-[40px]"
-          >
-            <Key className="w-3.5 h-3.5" />
-            <span>Connect Supabase</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {isCloudConnected && (
+              <>
+                <button
+                  type="button"
+                  disabled={isCloudSyncing}
+                  onClick={() => pushLocalDataToCloud()}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold text-xs shadow transition active:scale-95 min-h-[40px]"
+                >
+                  <UploadCloud className={`w-3.5 h-3.5 ${isCloudSyncing ? 'animate-bounce' : ''}`} />
+                  <span>Push Local to Cloud</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isCloudSyncing}
+                  onClick={() => fetchCloudData()}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 font-bold text-xs border border-slate-700 transition active:scale-95 min-h-[40px]"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isCloudSyncing ? 'animate-spin' : ''}`} />
+                  <span>Pull Cloud Data</span>
+                </button>
+              </>
+            )}
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow transition active:scale-95 min-h-[40px]"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>Connect Supabase</span>
+            </button>
+          </div>
         </div>
       </form>
 

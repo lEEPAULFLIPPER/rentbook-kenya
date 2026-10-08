@@ -37,8 +37,10 @@ import {
 import { useAuth } from './AuthContext';
 import { generateUnitNames } from '../lib/namingEngine';
 import { addToOfflineQueue, getOfflineQueue, removeFromOfflineQueue } from '../lib/offlineQueue';
-import { formatKES } from '../lib/formatters';
+import { formatKES, generateUUID } from '../lib/formatters';
 import { decodeShareSnapshot } from '../lib/shareEngine';
+import { DatabaseService, SqliteDbStats } from '../lib/databaseService';
+import { loadFullSnapshotFromIDB, saveFullSnapshotToIDB } from '../lib/indexedDb';
 
 interface LiveToast {
   id: string;
@@ -83,6 +85,10 @@ interface AppContextType {
   dismissToast: (id: string) => void;
   undoState: UndoState | null;
   dismissUndo: () => void;
+  isCloudSyncing: boolean;
+  lastCloudSyncAt: string | null;
+  pushLocalDataToCloud: () => Promise<{ success: boolean; message: string }>;
+  fetchCloudData: () => Promise<void>;
 
   // Modal Controllers
   isPaymentModalOpen: boolean;
@@ -126,6 +132,23 @@ interface AppContextType {
   dangerActionType: 'units' | 'payments' | 'all' | null;
   openDangerModal: (type: 'units' | 'payments' | 'all') => void;
   closeDangerModal: () => void;
+
+  // Database Engine & Client Mockup
+  activeDatabaseEngine: 'sqlite' | 'supabase' | 'indexeddb';
+  sqliteStats: SqliteDbStats | null;
+  isPresentationMode: boolean;
+  togglePresentationMode: () => void;
+  checkDatabaseHealth: () => Promise<void>;
+
+  // Receipt & Mockup Modals
+  isReceiptModalOpen: boolean;
+  receiptModalPayment: Payment | null;
+  openReceiptModal: (payment: Payment) => void;
+  closeReceiptModal: () => void;
+
+  isClientMockupModalOpen: boolean;
+  openClientMockupModal: () => void;
+  closeClientMockupModal: () => void;
 
   // Data Actions
   savePropertyWithUnits: (
@@ -265,6 +288,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [queuedSyncCount, setQueuedSyncCount] = useState<number>(() => getOfflineQueue().length);
   const [liveToasts, setLiveToasts] = useState<LiveToast[]>([]);
   const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
+  const [lastCloudSyncAt, setLastCloudSyncAt] = useState<string | null>(null);
 
   // Modals
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -287,6 +312,115 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isClientShareModalOpen, setIsClientShareModalOpen] = useState(false);
   const [isDangerModalOpen, setIsDangerModalOpen] = useState(false);
   const [dangerActionType, setDangerActionType] = useState<'units' | 'payments' | 'all' | null>(null);
+
+  // Database Engine & Client Pitch Mode
+  const [activeDatabaseEngine, setActiveDatabaseEngine] = useState<'sqlite' | 'supabase' | 'indexeddb'>('sqlite');
+  const [sqliteStats, setSqliteStats] = useState<SqliteDbStats | null>(null);
+  const [isPresentationMode, setIsPresentationMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('rentbook_pitch_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const togglePresentationMode = () => {
+    setIsPresentationMode((prev) => {
+      const next = !prev;
+      localStorage.setItem('rentbook_pitch_mode', String(next));
+      broadcastLiveAction(
+        next ? '🎯 Client Presentation Mode Activated' : 'Standard Management Mode Restored',
+        'info'
+      );
+      return next;
+    });
+  };
+
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [receiptModalPayment, setReceiptModalPayment] = useState<Payment | null>(null);
+
+  const openReceiptModal = (payment: Payment) => {
+    setReceiptModalPayment(payment);
+    setIsReceiptModalOpen(true);
+  };
+
+  const closeReceiptModal = () => {
+    setIsReceiptModalOpen(false);
+    setReceiptModalPayment(null);
+  };
+
+  const [isClientMockupModalOpen, setIsClientMockupModalOpen] = useState(false);
+  const openClientMockupModal = () => setIsClientMockupModalOpen(true);
+  const closeClientMockupModal = () => setIsClientMockupModalOpen(false);
+
+  const checkDatabaseHealth = async () => {
+    const stats = await DatabaseService.checkSqliteHealth();
+    if (stats) {
+      setSqliteStats(stats);
+      setActiveDatabaseEngine('sqlite');
+    } else if (isSupabaseConfigured()) {
+      setActiveDatabaseEngine('supabase');
+    } else {
+      setActiveDatabaseEngine('indexeddb');
+    }
+  };
+
+  // Initial Database Hydration (SQLite -> Supabase -> IndexedDB)
+  useEffect(() => {
+    const initDatabase = async () => {
+      // 1. Try SQLite Local Server API
+      const stats = await DatabaseService.checkSqliteHealth();
+      if (stats) {
+        setSqliteStats(stats);
+        setActiveDatabaseEngine('sqlite');
+        const sqliteData = await DatabaseService.pullAllFromSqlite();
+        if (sqliteData && sqliteData.properties && sqliteData.properties.length > 0) {
+          setProperties(sqliteData.properties);
+          setSelectedPropertyId((cur) => sqliteData.properties.some((p) => p.id === cur) ? cur : sqliteData.properties[0].id);
+          if (sqliteData.units) setUnits(sqliteData.units);
+          if (sqliteData.tenants) setTenants(sqliteData.tenants);
+          if (sqliteData.payments) setPayments(sqliteData.payments);
+          if (sqliteData.expenses) setExpenses(sqliteData.expenses);
+          if (sqliteData.auditLogs) setAuditLogs(sqliteData.auditLogs);
+          broadcastLiveAction(`Loaded from SQLite Database (${stats.database_file.split('/').pop()} · ${stats.file_size_kb} KB)`, 'success');
+          return;
+        }
+      }
+
+      // 2. Try Supabase Cloud
+      if (isSupabaseConfigured() && supabase) {
+        setActiveDatabaseEngine('supabase');
+        fetchCloudData();
+        return;
+      }
+
+      // 3. Fallback to IndexedDB
+      setActiveDatabaseEngine('indexeddb');
+      const idbData = await loadFullSnapshotFromIDB();
+      if (idbData.properties && idbData.properties.length > 0) {
+        setProperties(idbData.properties as Property[]);
+        if (idbData.units) setUnits(idbData.units as Unit[]);
+        if (idbData.tenants) setTenants(idbData.tenants as Tenant[]);
+        if (idbData.payments) setPayments(idbData.payments as Payment[]);
+        if (idbData.expenses) setExpenses(idbData.expenses as Expense[]);
+      }
+    };
+
+    initDatabase();
+  }, []);
+
+  // Sync to IndexedDB for persistent offline storage
+  useEffect(() => {
+    saveFullSnapshotToIDB({
+      properties,
+      units,
+      tenants,
+      payments,
+      expenses,
+      auditLogs,
+      settings,
+    });
+  }, [properties, units, tenants, payments, expenses, auditLogs, settings]);
 
   // Save to localStorage whenever state changes
   useEffect(() => {
@@ -443,12 +577,245 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Realtime Supabase Subscription (if live configured)
+  // Cloud Fetcher: Hydrates state from live Supabase tables
+  const fetchCloudData = async () => {
+    if (!isSupabaseConfigured() || !supabase) return;
+    setIsCloudSyncing(true);
+    try {
+      // 1. Properties
+      const { data: cloudProps, error: pErr } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!pErr && cloudProps && cloudProps.length > 0) {
+        setProperties(cloudProps);
+        setSelectedPropertyId((current) =>
+          cloudProps.some((p) => p.id === current) ? current : cloudProps[0].id
+        );
+      }
+
+      // 2. Units
+      const { data: cloudUnits, error: uErr } = await supabase
+        .from('units')
+        .select('*')
+        .order('floor_number', { ascending: true })
+        .order('name', { ascending: true });
+      if (!uErr && cloudUnits && cloudUnits.length > 0) {
+        setUnits(cloudUnits);
+      }
+
+      // 3. Tenants
+      const { data: cloudTenants, error: tErr } = await supabase
+        .from('tenants')
+        .select('*');
+      if (!tErr && cloudTenants && cloudTenants.length > 0) {
+        setTenants(cloudTenants);
+      }
+
+      // 4. Payments
+      const { data: cloudPayments, error: payErr } = await supabase
+        .from('payments')
+        .select('*')
+        .order('date', { ascending: false });
+      if (!payErr && cloudPayments && cloudPayments.length > 0) {
+        setPayments(cloudPayments);
+      }
+
+      // 5. Expenses
+      const { data: cloudExpenses, error: expErr } = await supabase
+        .from('expenses')
+        .select('*')
+        .order('date', { ascending: false });
+      if (!expErr && cloudExpenses && cloudExpenses.length > 0) {
+        setExpenses(cloudExpenses);
+      }
+
+      // 6. Audit Logs
+      const { data: cloudAudit, error: aErr } = await supabase
+        .from('audit_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (!aErr && cloudAudit && cloudAudit.length > 0) {
+        setAuditLogs(cloudAudit);
+      }
+
+      const syncTime = new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastCloudSyncAt(syncTime);
+      broadcastLiveAction(`Cloud records loaded from Supabase (${syncTime})`, 'success');
+    } catch (err: any) {
+      console.error('Error fetching Supabase cloud data:', err);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  // Push local in-memory records directly to Supabase Cloud
+  const pushLocalDataToCloud = async (): Promise<{ success: boolean; message: string }> => {
+    if (!isSupabaseConfigured() || !supabase) {
+      return { success: false, message: 'Supabase credentials not configured. Please set URL & Key in Settings.' };
+    }
+    setIsCloudSyncing(true);
+    try {
+      // 1. Properties
+      if (properties.length > 0) {
+        const { error: pErr } = await supabase.from('properties').upsert(
+          properties.map((p) => ({
+            id: p.id,
+            name: p.name,
+            location: p.location,
+            floors: p.floors,
+            units_per_floor: p.units_per_floor,
+            blocks: p.blocks || [],
+            naming_scheme: p.naming_scheme || 'scheme1',
+            owner_id: p.owner_id || currentUser.id,
+            created_by: p.created_by || currentUser.id,
+          }))
+        );
+        if (pErr) throw new Error(`Properties upload failed: ${pErr.message}`);
+      }
+
+      // 2. Units
+      if (units.length > 0) {
+        const { error: uErr } = await supabase.from('units').upsert(
+          units.map((u) => ({
+            id: u.id,
+            property_id: u.property_id,
+            block_name: u.block_name || null,
+            floor_number: u.floor_number ?? 0,
+            name: u.name,
+            monthly_rent: Number(u.monthly_rent) || 0,
+            status: u.status,
+            notes: u.notes || null,
+            version: u.version || 1,
+            deleted_at: u.deleted_at || null,
+          }))
+        );
+        if (uErr) throw new Error(`Units upload failed: ${uErr.message}`);
+      }
+
+      // 3. Tenants
+      if (tenants.length > 0) {
+        const { error: tErr } = await supabase.from('tenants').upsert(
+          tenants.map((t) => ({
+            id: t.id,
+            unit_id: t.unit_id,
+            full_name: t.full_name,
+            phone: t.phone,
+            id_number: t.id_number || null,
+            move_in_date: t.move_in_date,
+            move_out_date: t.move_out_date || null,
+            deposit_paid: Number(t.deposit_paid) || 0,
+            rent_due_day: t.rent_due_day || 5,
+            version: t.version || 1,
+            deleted_at: t.deleted_at || null,
+          }))
+        );
+        if (tErr) throw new Error(`Tenants upload failed: ${tErr.message}`);
+      }
+
+      // 4. Payments
+      if (payments.length > 0) {
+        const { error: payErr } = await supabase.from('payments').upsert(
+          payments.map((p) => ({
+            id: p.id,
+            unit_id: p.unit_id,
+            tenant_id: p.tenant_id,
+            date: p.date,
+            amount: Number(p.amount),
+            method: p.method,
+            reference: p.reference,
+            covers_month: p.covers_month,
+            note: p.note || null,
+            status: p.status,
+            recorded_by: p.recorded_by || currentUser.id,
+            approved_by: p.approved_by || null,
+            approved_at: p.approved_at || null,
+            reject_reason: p.reject_reason || null,
+            version: p.version || 1,
+            deleted_at: p.deleted_at || null,
+          }))
+        );
+        if (payErr) throw new Error(`Payments upload failed: ${payErr.message}`);
+      }
+
+      // 5. Expenses
+      if (expenses.length > 0) {
+        const { error: expErr } = await supabase.from('expenses').upsert(
+          expenses.map((e) => ({
+            id: e.id,
+            property_id: e.property_id,
+            date: e.date,
+            amount: Number(e.amount),
+            category: e.category,
+            payee: e.payee,
+            note: e.note || null,
+            status: e.status,
+            recorded_by: e.recorded_by || currentUser.id,
+            approved_by: e.approved_by || null,
+            approved_at: e.approved_at || null,
+            reject_reason: e.reject_reason || null,
+            deleted_at: e.deleted_at || null,
+          }))
+        );
+        if (expErr) throw new Error(`Expenses upload failed: ${expErr.message}`);
+      }
+
+      const syncTime = new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      setLastCloudSyncAt(syncTime);
+      broadcastLiveAction('All local records successfully pushed to Supabase Cloud!', 'success');
+      return { success: true, message: 'All local records pushed to cloud database.' };
+    } catch (err: any) {
+      console.error('Failed to push data to cloud:', err);
+      broadcastLiveAction(`Cloud sync error: ${err.message}`, 'warning');
+      return { success: false, message: err.message || 'Sync failed' };
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  // Realtime Supabase Subscription & Initial Cloud Hydration
   useEffect(() => {
     if (!isSupabaseConfigured() || !supabase) return;
 
+    // Initial load from Supabase
+    fetchCloudData();
+
     const channel = supabase
       .channel('rentbook-realtime-all')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const np = payload.new as Property;
+          setProperties((prev) => [np, ...prev.filter((p) => p.id !== np.id)]);
+        } else if (payload.eventType === 'UPDATE') {
+          const up = payload.new as Property;
+          setProperties((prev) => prev.map((p) => (p.id === up.id ? up : p)));
+        } else if (payload.eventType === 'DELETE') {
+          setProperties((prev) => prev.filter((p) => p.id !== payload.old.id));
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'units' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const nu = payload.new as Unit;
+          setUnits((prev) => [nu, ...prev.filter((u) => u.id !== nu.id)]);
+        } else if (payload.eventType === 'UPDATE') {
+          const uu = payload.new as Unit;
+          setUnits((prev) => prev.map((u) => (u.id === uu.id ? uu : u)));
+        } else if (payload.eventType === 'DELETE') {
+          setUnits((prev) => prev.filter((u) => u.id !== payload.old.id));
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tenants' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const nt = payload.new as Tenant;
+          setTenants((prev) => [nt, ...prev.filter((t) => t.id !== nt.id)]);
+        } else if (payload.eventType === 'UPDATE') {
+          const ut = payload.new as Tenant;
+          setTenants((prev) => prev.map((t) => (t.id === ut.id ? ut : t)));
+        } else if (payload.eventType === 'DELETE') {
+          setTenants((prev) => prev.filter((t) => t.id !== payload.old.id));
+        }
+      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, (payload) => {
         if (payload.eventType === 'INSERT') {
           const newPay = payload.new as Payment;
@@ -468,6 +835,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (payload.eventType === 'INSERT') {
           const newExp = payload.new as Expense;
           setExpenses((prev) => [newExp, ...prev.filter((e) => e.id !== newExp.id)]);
+        } else if (payload.eventType === 'UPDATE') {
+          const updated = payload.new as Expense;
+          setExpenses((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+        } else if (payload.eventType === 'DELETE') {
+          setExpenses((prev) => prev.filter((e) => e.id !== payload.old.id));
         }
       })
       .subscribe();
@@ -775,7 +1147,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     defaultRent: number,
     customUnits?: PreviewUnitSpec[] | string[]
   ) => {
-    const propId = propData.id || `prop-${Date.now()}`;
+    const propId = propData.id || generateUUID();
     const newProperty: Property = {
       ...propData,
       id: propId,
@@ -794,14 +1166,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return [newProperty, ...prev];
     });
 
+    let newUnits: Unit[] = [];
+
     // Auto-generate or insert preview-configured units if creating new property
     if (!propData.id) {
-      let newUnits: Unit[] = [];
-
       if (customUnits && customUnits.length > 0 && typeof customUnits[0] === 'object') {
         const previewSpecs = customUnits as PreviewUnitSpec[];
-        newUnits = previewSpecs.map((spec, idx) => ({
-          id: `unit-${propId}-${idx + 1}-${Math.random().toString(36).substring(2, 6)}`,
+        newUnits = previewSpecs.map((spec) => ({
+          id: generateUUID(),
           property_id: propId,
           block_name: spec.blockName,
           floor_number: spec.floorNumber,
@@ -821,7 +1193,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         );
 
         newUnits = generated.map((gen, idx) => ({
-          id: `unit-${propId}-${idx + 1}-${Math.random().toString(36).substring(2, 6)}`,
+          id: generateUUID(),
           property_id: propId,
           block_name: gen.blockName,
           floor_number: gen.floorNumber,
@@ -836,6 +1208,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUnits((prev) => [...newUnits, ...prev]);
     }
 
+    if (isSupabaseConfigured() && supabase) {
+      const client = supabase;
+      client.from('properties').upsert({
+        id: propId,
+        name: newProperty.name,
+        location: newProperty.location,
+        floors: newProperty.floors,
+        units_per_floor: newProperty.units_per_floor,
+        blocks: newProperty.blocks || [],
+        naming_scheme: newProperty.naming_scheme || 'scheme1',
+        owner_id: newProperty.owner_id || currentUser.id,
+        created_by: currentUser.id,
+      }).then(() => {
+        if (newUnits.length > 0) {
+          client.from('units').upsert(
+            newUnits.map((u) => ({
+              id: u.id,
+              property_id: u.property_id,
+              block_name: u.block_name || null,
+              floor_number: u.floor_number ?? 0,
+              name: u.name,
+              monthly_rent: Number(u.monthly_rent) || 0,
+              status: u.status,
+              notes: u.notes || null,
+              version: 1,
+            }))
+          );
+        }
+      });
+    }
+
     setSelectedPropertyId(propId);
     logAudit('INSERT', 'properties', propId, null, newProperty as unknown as Record<string, unknown>, `Created property ${newProperty.name} with auto-named units`);
     broadcastLiveAction(`Created property "${newProperty.name}" with auto-named houses`, 'success');
@@ -844,6 +1247,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateProperty = async (prop: Property) => {
     const before = properties.find((p) => p.id === prop.id);
     setProperties((prev) => prev.map((p) => (p.id === prop.id ? prop : p)));
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('properties').update({
+        name: prop.name,
+        location: prop.location,
+        floors: prop.floors,
+        units_per_floor: prop.units_per_floor,
+        blocks: prop.blocks || [],
+        naming_scheme: prop.naming_scheme || 'scheme1',
+        owner_id: prop.owner_id,
+      }).eq('id', prop.id);
+    }
     logAudit('UPDATE', 'properties', prop.id, before as unknown as Record<string, unknown>, prop as unknown as Record<string, unknown>, `Updated property details`);
   };
 
@@ -851,6 +1265,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (activeRole !== 'admin') return;
     const target = properties.find((p) => p.id === propId);
     setProperties((prev) => prev.filter((p) => p.id !== propId));
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('properties').delete().eq('id', propId);
+    }
     logAudit('DELETE', 'properties', propId, target as unknown as Record<string, unknown>, null, `Deleted property`);
     broadcastLiveAction(`Deleted property ${target?.name || ''}`, 'warning');
   };
@@ -858,11 +1275,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addUnit = async (unitData: Omit<Unit, 'id' | 'version' | 'created_at' | 'updated_at'>) => {
     const newUnit: Unit = {
       ...unitData,
-      id: `unit-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateUUID(),
       version: 1,
       created_at: new Date().toISOString(),
     };
     setUnits((prev) => [newUnit, ...prev]);
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('units').insert({
+        id: newUnit.id,
+        property_id: newUnit.property_id,
+        block_name: newUnit.block_name || null,
+        floor_number: newUnit.floor_number ?? 0,
+        name: newUnit.name,
+        monthly_rent: Number(newUnit.monthly_rent) || 0,
+        status: newUnit.status,
+        notes: newUnit.notes || null,
+        version: 1,
+      });
+    }
     logAudit('INSERT', 'units', newUnit.id, null, newUnit as unknown as Record<string, unknown>, `Added unit ${newUnit.name}`);
   };
 
@@ -871,6 +1301,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUnits((prev) =>
       prev.map((u) => (u.id === unit.id ? { ...unit, version: (u.version || 1) + 1, updated_at: new Date().toISOString() } : u))
     );
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('units').update({
+        block_name: unit.block_name || null,
+        floor_number: unit.floor_number ?? 0,
+        name: unit.name,
+        monthly_rent: Number(unit.monthly_rent) || 0,
+        status: unit.status,
+        notes: unit.notes || null,
+        version: (unit.version || 1) + 1,
+      }).eq('id', unit.id);
+    }
     logAudit('UPDATE', 'units', unit.id, before as unknown as Record<string, unknown>, unit as unknown as Record<string, unknown>, `Updated unit ${unit.name}`);
   };
 
@@ -880,6 +1321,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const before = { name: target.name };
     const after = { name: newName };
     setUnits((prev) => prev.map((u) => (u.id === unitId ? { ...u, name: newName.trim() } : u)));
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('units').update({ name: newName.trim() }).eq('id', unitId);
+    }
     logAudit('UPDATE', 'units', unitId, before, after, `Renamed unit from ${target.name} to ${newName}`);
     broadcastLiveAction(`Renamed house to "${newName}"`, 'info');
   };
@@ -908,6 +1352,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     setUnits(updatedUnits);
+    if (isSupabaseConfigured() && supabase) {
+      const client = supabase;
+      updatedUnits.forEach((u) => {
+        client.from('units').update({ name: u.name }).eq('id', u.id);
+      });
+    }
     logAudit('UPDATE', 'units', propertyId, null, { scheme: scheme.type }, `Bulk renamed units in ${prop.name}`);
     broadcastLiveAction(`Bulk renamed all houses in ${prop.name}`, 'success');
   };
@@ -920,11 +1370,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (hasPayments) {
       // Soft archive instead
       setUnits((prev) => prev.map((u) => (u.id === unitId ? { ...u, deleted_at: new Date().toISOString() } : u)));
+      if (isSupabaseConfigured() && supabase) {
+        supabase.from('units').update({ deleted_at: new Date().toISOString() }).eq('id', unitId);
+      }
       logAudit('DELETE', 'units', unitId, null, null, `Archived unit (preserved payment ledger)`);
       return { success: true, message: 'Unit archived to preserve cash book integrity' };
     }
 
     setUnits((prev) => prev.filter((u) => u.id !== unitId));
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('units').delete().eq('id', unitId);
+    }
     logAudit('DELETE', 'units', unitId, null, null, `Permanently deleted unit`);
     return { success: true };
   };
@@ -932,7 +1388,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const saveTenant = async (
     tenantData: Omit<Tenant, 'id' | 'version' | 'created_at' | 'updated_at'> & { id?: string }
   ) => {
-    const tenantId = tenantData.id || `t-${Date.now()}`;
+    const tenantId = tenantData.id || generateUUID();
     const newTenant: Tenant = {
       ...tenantData,
       id: tenantId,
@@ -955,6 +1411,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((u) => (u.id === tenantData.unit_id ? { ...u, status: 'occupied' } : u))
     );
 
+    if (isSupabaseConfigured() && supabase) {
+      const client = supabase;
+      client.from('tenants').upsert({
+        id: tenantId,
+        unit_id: newTenant.unit_id,
+        full_name: newTenant.full_name,
+        phone: newTenant.phone,
+        id_number: newTenant.id_number || null,
+        move_in_date: newTenant.move_in_date,
+        deposit_paid: Number(newTenant.deposit_paid) || 0,
+        rent_due_day: newTenant.rent_due_day || 5,
+        version: 1,
+      }).then(() => {
+        client.from('units').update({ status: 'occupied' }).eq('id', newTenant.unit_id);
+      });
+    }
+
     logAudit('INSERT', 'tenants', tenantId, null, newTenant as unknown as Record<string, unknown>, `Assigned tenant ${newTenant.full_name}`);
     broadcastLiveAction(`Assigned tenant ${newTenant.full_name}`, 'success');
   };
@@ -972,6 +1445,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((u) => (u.id === target.unit_id ? { ...u, status: 'vacant' } : u))
     );
 
+    if (isSupabaseConfigured() && supabase) {
+      const client = supabase;
+      client.from('tenants').update({ move_out_date: moveOutDate }).eq('id', tenantId).then(() => {
+        client.from('units').update({ status: 'vacant' }).eq('id', target.unit_id);
+      });
+    }
+
     logAudit('UPDATE', 'tenants', tenantId, null, { move_out_date: moveOutDate }, `Vacated tenant ${target.full_name}`);
     broadcastLiveAction(`Tenant ${target.full_name} moved out. House marked vacant.`, 'info');
   };
@@ -979,6 +1459,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteTenant = async (tenantId: string) => {
     const target = tenants.find((t) => t.id === tenantId);
     setTenants((prev) => prev.filter((t) => t.id !== tenantId));
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('tenants').delete().eq('id', tenantId);
+    }
     logAudit('DELETE', 'tenants', tenantId, target as unknown as Record<string, unknown>, null, `Deleted tenant record`);
   };
 
@@ -1011,7 +1494,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const newPayment: Payment = {
       ...paymentData,
-      id: `pay-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateUUID(),
       status,
       recorded_by: currentUser.id,
       recorder_name: `${currentUser.full_name} (${activeRole.toUpperCase()})`,
@@ -1028,6 +1511,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setPayments((prev) => [newPayment, ...prev]);
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('payments').insert({
+        id: newPayment.id,
+        unit_id: newPayment.unit_id,
+        tenant_id: newPayment.tenant_id,
+        date: newPayment.date,
+        amount: Number(newPayment.amount),
+        method: newPayment.method,
+        reference: newPayment.reference,
+        covers_month: newPayment.covers_month,
+        note: newPayment.note || null,
+        status: newPayment.status,
+        recorded_by: newPayment.recorded_by,
+        approved_by: newPayment.approved_by || null,
+        approved_at: newPayment.approved_at || null,
+      });
+    }
 
     const unit = units.find((u) => u.id === newPayment.unit_id);
     const msg = requiresApproval
@@ -1067,6 +1568,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('payments').update({
+        status: 'approved',
+        approved_by: currentUser.id,
+        approved_at: new Date().toISOString(),
+      }).eq('id', paymentId);
+    }
+
     const unit = units.find((u) => u.id === target.unit_id);
     logAudit('APPROVE', 'payments', paymentId, { status: 'pending' }, { status: 'approved' }, `Approved payment of ${formatKES(target.amount)}`);
     broadcastLiveAction(`Approved payment of ${formatKES(target.amount)} for House ${unit?.name || ''}`, 'success');
@@ -1091,6 +1600,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('payments').update({
+        status: 'rejected',
+        reject_reason: reason,
+        approved_by: currentUser.id,
+        approved_at: new Date().toISOString(),
+      }).eq('id', paymentId);
+    }
+
     logAudit('REJECT', 'payments', paymentId, { status: target.status }, { status: 'rejected', reject_reason: reason }, `Rejected payment: ${reason}`);
     broadcastLiveAction(`Rejected payment: ${reason}`, 'warning');
   };
@@ -1103,6 +1621,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPayments((prev) =>
       prev.map((p) => (p.id === paymentId ? { ...p, status: 'void', note: `VOIDED: ${reason}` } : p))
     );
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('payments').update({
+        status: 'void',
+        note: `VOIDED: ${reason}`,
+      }).eq('id', paymentId);
+    }
 
     logAudit('VOID', 'payments', paymentId, { status: target.status }, { status: 'void', reason }, `Voided payment: ${reason}`);
     broadcastLiveAction(`Payment marked VOID: ${reason}`, 'warning');
@@ -1126,11 +1651,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const snapshot = [...payments];
     setPayments((prev) => prev.filter((p) => p.id !== paymentId));
 
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('payments').update({
+        deleted_at: new Date().toISOString(),
+        deleted_by: currentUser.id,
+      }).eq('id', paymentId);
+    }
+
     setUndoState({
       message: `Deleted payment of ${formatKES(target.amount)}. Click undo to restore.`,
       secondsRemaining: 10,
       undoAction: () => {
         setPayments(snapshot);
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from('payments').update({
+            deleted_at: null,
+            deleted_by: null,
+          }).eq('id', paymentId);
+        }
         setUndoState(null);
         broadcastLiveAction('Restored deleted payment', 'info');
       },
@@ -1145,7 +1683,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   ) => {
     const newExpense: Expense = {
       ...expenseData,
-      id: `exp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: generateUUID(),
       status: 'approved',
       recorded_by: currentUser.id,
       recorder_name: `${currentUser.full_name} (${activeRole.toUpperCase()})`,
@@ -1153,23 +1691,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setExpenses((prev) => [newExpense, ...prev]);
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('expenses').insert({
+        id: newExpense.id,
+        property_id: newExpense.property_id,
+        date: newExpense.date,
+        amount: Number(newExpense.amount),
+        category: newExpense.category,
+        payee: newExpense.payee,
+        note: newExpense.note || null,
+        status: newExpense.status,
+        recorded_by: newExpense.recorded_by,
+      });
+    }
+
     logAudit('INSERT', 'expenses', newExpense.id, null, newExpense as unknown as Record<string, unknown>, `Recorded expense: ${newExpense.category} ${formatKES(newExpense.amount)} to ${newExpense.payee}`);
     broadcastLiveAction(`Logged expense: ${formatKES(newExpense.amount)} (${newExpense.category})`, 'info');
   };
 
   const approveExpense = async (expenseId: string) => {
     setExpenses((prev) => prev.map((e) => (e.id === expenseId ? { ...e, status: 'approved' } : e)));
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('expenses').update({ status: 'approved' }).eq('id', expenseId);
+    }
   };
 
   const rejectExpense = async (expenseId: string, reason: string) => {
     setExpenses((prev) =>
       prev.map((e) => (e.id === expenseId ? { ...e, status: 'rejected', reject_reason: reason } : e))
     );
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('expenses').update({ status: 'rejected', reject_reason: reason }).eq('id', expenseId);
+    }
   };
 
   const deleteExpense = async (expenseId: string) => {
     if (activeRole === 'caretaker') return;
     setExpenses((prev) => prev.filter((e) => e.id !== expenseId));
+    if (isSupabaseConfigured() && supabase) {
+      supabase.from('expenses').update({ deleted_at: new Date().toISOString() }).eq('id', expenseId);
+    }
     logAudit('DELETE', 'expenses', expenseId, null, null, `Deleted expense`);
   };
 
@@ -1337,6 +1899,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dismissToast,
         undoState,
         dismissUndo,
+        isCloudSyncing,
+        lastCloudSyncAt,
+        pushLocalDataToCloud,
+        fetchCloudData,
         isPaymentModalOpen,
         paymentPrefill,
         openPaymentModal,
@@ -1370,6 +1936,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dangerActionType,
         openDangerModal,
         closeDangerModal,
+        activeDatabaseEngine,
+        sqliteStats,
+        isPresentationMode,
+        togglePresentationMode,
+        checkDatabaseHealth,
+        isReceiptModalOpen,
+        receiptModalPayment,
+        openReceiptModal,
+        closeReceiptModal,
+        isClientMockupModalOpen,
+        openClientMockupModal,
+        closeClientMockupModal,
         savePropertyWithUnits,
         updateProperty,
         deleteProperty,

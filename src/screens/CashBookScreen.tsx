@@ -61,6 +61,7 @@ export const CashBookScreen: React.FC = () => {
     deletePayment,
     openPaymentModal,
     openExpenseModal,
+    openReceiptModal,
     broadcastLiveAction,
   } = useApp();
 
@@ -895,6 +896,15 @@ export const CashBookScreen: React.FC = () => {
                                           Pending Review
                                         </span>
                                       )}
+                                      {/* Official Print Receipt Voucher Button */}
+                                      <button
+                                        type="button"
+                                        onClick={() => openReceiptModal(p)}
+                                        className="p-1 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition print:hidden"
+                                        title={`Print Official Rent Receipt for ${formatKES(p.amount)} [Ref: ${p.reference}]`}
+                                      >
+                                        <Printer className="w-3.5 h-3.5 text-sky-400" />
+                                      </button>
                                       {/* Delete button: strictly under verify closed period option! Otherwise icon does NOT appear */}
                                       {isClosedPeriodVerified && (activeRole !== 'caretaker' || p.status === 'pending') && (
                                         <button

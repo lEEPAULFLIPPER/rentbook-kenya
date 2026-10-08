@@ -26,6 +26,9 @@ import { UnitModal } from './components/modals/UnitModal';
 import { UserInviteModal } from './components/modals/UserInviteModal';
 import { ConfirmDangerModal } from './components/modals/ConfirmDangerModal';
 import { ClientShareModal } from './components/modals/ClientShareModal';
+import { PrintReceiptModal } from './components/modals/PrintReceiptModal';
+import { ClientMockupModal } from './components/modals/ClientMockupModal';
+import { Sparkles } from 'lucide-react';
 
 // Screens
 import { DashboardScreen } from './screens/DashboardScreen';
@@ -46,6 +49,17 @@ const MainLayout: React.FC = () => {
     openExpenseModal,
     isClientShareModalOpen,
     closeClientShareModal,
+    isReceiptModalOpen,
+    receiptModalPayment,
+    closeReceiptModal,
+    isClientMockupModalOpen,
+    closeClientMockupModal,
+    openClientMockupModal,
+    isPresentationMode,
+    togglePresentationMode,
+    currentProperty,
+    units,
+    tenants,
   } = useApp();
   const { isViewingAs, viewAsRole } = useAuth();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -98,6 +112,34 @@ const MainLayout: React.FC = () => {
         </div>
       )}
 
+      {/* Client Presentation Pitch Banner */}
+      {isPresentationMode && (
+        <div className="bg-emerald-950/90 text-emerald-100 border-b border-emerald-700 px-3 py-1.5 text-xs flex items-center justify-between font-semibold shadow-inner">
+          <div className="flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center bg-emerald-500/30 text-emerald-300 font-black text-xs">
+              🎯
+            </span>
+            <span>
+              <strong>CLIENT MOCKUP PRESENTATION</strong> · Estate: <span className="underline decoration-emerald-400 font-bold">{currentProperty?.name}</span> · Real SQLite Database Online
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => openClientMockupModal()}
+              className="px-2 py-0.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[11px] shadow transition active:scale-95"
+            >
+              Tailor Mockup
+            </button>
+            <button
+              onClick={togglePresentationMode}
+              className="text-emerald-300 hover:text-white hover:underline text-[11px]"
+            >
+              Exit Pitch Mode
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Header */}
       <TopNav onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
 
@@ -127,6 +169,18 @@ const MainLayout: React.FC = () => {
       <ClientShareModal
         isOpen={isClientShareModalOpen}
         onClose={closeClientShareModal}
+      />
+      <PrintReceiptModal
+        isOpen={isReceiptModalOpen}
+        onClose={closeReceiptModal}
+        payment={receiptModalPayment}
+        unit={units.find((u) => u.id === receiptModalPayment?.unit_id)}
+        tenant={tenants.find((t) => t.id === receiptModalPayment?.tenant_id)}
+        property={currentProperty}
+      />
+      <ClientMockupModal
+        isOpen={isClientMockupModalOpen}
+        onClose={closeClientMockupModal}
       />
 
       {/* Command Palette */}

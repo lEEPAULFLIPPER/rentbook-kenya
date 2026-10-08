@@ -115,3 +115,18 @@ export function createWhatsAppHref(phone: string, message: string): string {
   const formattedPhone = formatPhoneKE(phone).replace(/^\+/, '');
   return `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * Generate a standard RFC4122 v4 UUID (native crypto or fallback)
+ * Ensures 100% compatibility with Postgres UUID primary keys
+ */
+export function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
