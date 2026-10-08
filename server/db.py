@@ -185,7 +185,7 @@ def seed_default_demo_data(con):
 
     # Profiles
     profiles = [
-        ('a0000000-0000-0000-0000-000000000001', 'Admin (Chromebook Master)', '0700111222', 'admin', 'active', '2026-06-01T08:00:00Z'),
+        ('a0000000-0000-0000-0000-000000000001', 'System Administrator', '0700111222', 'admin', 'active', '2026-06-01T08:00:00Z'),
         ('a0000000-0000-0000-0000-000000000002', 'David Kimani (Landlord)', '0722334455', 'landlord', 'active', '2026-06-01T08:00:00Z'),
         ('a0000000-0000-0000-0000-000000000003', 'Jackson Omondi (Caretaker)', '0711998877', 'caretaker', 'active', '2026-06-01T08:00:00Z'),
     ]

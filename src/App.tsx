@@ -1,7 +1,5 @@
-// =====================================================================
-// RENTBOOK KENYA — APP ROOT & LAYOUT ORCHESTRATOR
-// Engineered for Acer Chromebook Spin 311 (1366x768) and Mobile Devices
-// =====================================================================
+// RentBook Kenya - Enterprise Rental Management & Cash Book System
+
 
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -64,7 +62,7 @@ const MainLayout: React.FC = () => {
   const { isViewingAs, viewAsRole } = useAuth();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
-  // Keyboard shortcuts tuned for Chromebook Spin 311
+  // Global keyboard shortcuts
   useKeyboardShortcuts({
     onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
     onNewPayment: () => openPaymentModal(),
@@ -101,7 +99,7 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
-      {/* "View As" Mode Warning Banner on Chromebook */}
+      {/* Role Preview Banner */}
       {isViewingAs && (
         <div className="bg-purple-950 text-purple-200 border-b border-purple-800 px-3 py-1.5 text-xs flex items-center justify-between font-semibold">
           <span>
@@ -112,29 +110,29 @@ const MainLayout: React.FC = () => {
         </div>
       )}
 
-      {/* Client Presentation Pitch Banner */}
+      {/* Executive Presentation View Banner */}
       {isPresentationMode && (
-        <div className="bg-emerald-950/90 text-emerald-100 border-b border-emerald-700 px-3 py-1.5 text-xs flex items-center justify-between font-semibold shadow-inner">
+        <div className="bg-slate-900 text-emerald-300 border-b border-emerald-600/50 px-3 py-1.5 text-xs flex items-center justify-between font-semibold shadow-inner">
           <div className="flex items-center gap-2">
-            <span className="flex h-5 w-5 items-center justify-center bg-emerald-500/30 text-emerald-300 font-black text-xs">
-              🎯
+            <span className="flex h-5 w-5 items-center justify-center bg-emerald-500/20 text-emerald-300 font-mono text-xs">
+              ⚡
             </span>
             <span>
-              <strong>CLIENT MOCKUP PRESENTATION</strong> · Estate: <span className="underline decoration-emerald-400 font-bold">{currentProperty?.name}</span> · Real SQLite Database Online
+              <strong className="tracking-wide">EXECUTIVE PRESENTATION VIEW</strong> · Property: <span className="underline decoration-emerald-400 font-bold text-white">{currentProperty?.name}</span> · <span className="text-emerald-400 font-mono text-[11px]">Live Ledger Active</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => openClientMockupModal()}
-              className="px-2 py-0.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[11px] shadow transition active:scale-95"
+              className="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[11px] shadow transition active:scale-95"
             >
-              Tailor Mockup
+              Property Setup
             </button>
             <button
               onClick={togglePresentationMode}
-              className="text-emerald-300 hover:text-white hover:underline text-[11px]"
+              className="text-slate-400 hover:text-white hover:underline text-[11px]"
             >
-              Exit Pitch Mode
+              Standard View
             </button>
           </div>
         </div>

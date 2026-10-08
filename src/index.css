@@ -39,7 +39,7 @@
   }
 }
 
-/* Custom sharp scrollbars for compact Chromebook views */
+/* Compact sharp scrollbars */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;

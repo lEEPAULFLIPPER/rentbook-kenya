@@ -65,7 +65,7 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured()
 export const DEMO_PROFILES: Profile[] = [
   {
     id: 'a0000000-0000-0000-0000-000000000001',
-    full_name: 'Admin (Chromebook Master)',
+    full_name: 'System Administrator',
     phone: '0700111222',
     role: 'admin',
     status: 'active',

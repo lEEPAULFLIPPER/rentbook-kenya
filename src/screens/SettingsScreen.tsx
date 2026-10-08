@@ -275,7 +275,7 @@ export const SettingsScreen: React.FC = () => {
               className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition active:scale-95 min-h-[38px]"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Tailor Client Mockup</span>
+              <span>Provision Custom Estate</span>
             </button>
             <button
               type="button"
@@ -287,7 +287,7 @@ export const SettingsScreen: React.FC = () => {
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isPresentationMode ? 'Exit Pitch Mode' : 'Toggle Pitch Mode'}</span>
+              <span>{isPresentationMode ? 'Exit Presentation' : 'Presentation View'}</span>
             </button>
           </div>
 
@@ -322,12 +322,12 @@ export const SettingsScreen: React.FC = () => {
             </h2>
           </div>
           <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase font-mono">
-            Mockup Ready ✅
+            Production Ready ✅
           </span>
         </div>
 
         <p className="text-xs text-slate-400">
-          Once your client approves this mockup, follow these 3 steps with the deposit money to launch:
+          RentBook Kenya is architected for immediate production deployment with a dedicated Kenyan domain name (.co.ke or .ke):
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
@@ -387,9 +387,8 @@ export const SettingsScreen: React.FC = () => {
         </div>
 
         <p className="text-xs text-slate-400 leading-relaxed">
-          To sync live data between your Acer Chromebook and phones, paste your free Supabase
-          project credentials below. You can do this directly from Chrome without running any
-          terminal commands.
+          To enable real-time cloud sync across desktop workstations and mobile devices, enter your production Supabase
+          database credentials below. Connects via encrypted WebSocket channels with Row-Level Security.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">

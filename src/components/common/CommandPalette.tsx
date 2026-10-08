@@ -1,7 +1,5 @@
-// =====================================================================
-// RENTBOOK KENYA — COMMAND PALETTE (Ctrl+K or "/")
-// Fastest keyboard navigation for Acer Chromebook Spin 311
-// =====================================================================
+// RentBook Kenya - Command Palette (Ctrl+K or "/")
+
 
 import React, { useEffect, useRef, useState } from 'react';
 import {

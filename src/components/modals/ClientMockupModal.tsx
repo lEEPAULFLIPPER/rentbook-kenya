@@ -1,8 +1,4 @@
-// =====================================================================
-// RENTBOOK KENYA — CLIENT MOCKUP & DATABASE GENERATOR MODAL
-// Allows immediate setup of a tailored apartment mockup for pitching clients
-// Supports full Kenyan unit naming schemes and flexible units-per-floor
-// =====================================================================
+// RentBook Kenya - Estate Provisioning & Database Engine
 
 import React, { useState, useMemo } from 'react';
 import {
@@ -161,12 +157,12 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
       });
 
       if (res.success) {
-        broadcastLiveAction(`Mockup generated for ${propertyName} with ${totalUnits} units! Reloading...`, 'success');
+        broadcastLiveAction(`Estate provisioned for ${propertyName} with ${totalUnits} units! Reloading...`, 'success');
         setTimeout(() => {
           window.location.reload();
         }, 1000);
       } else {
-        alert(res.error || 'Failed to generate mockup');
+        alert(res.error || 'Failed to provision property database');
       }
     } catch (err: any) {
       alert(`Error: ${err.message}`);
@@ -176,10 +172,10 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
   };
 
   const handleResetDefault = async () => {
-    if (!window.confirm('Reset database to default Kilimani Heights demo?')) return;
+    if (!window.confirm('Reset database to default Kilimani Heights dataset?')) return;
     setIsGenerating(true);
     await DatabaseService.resetDefaultDemo();
-    broadcastLiveAction('Reset to default Kilimani Heights demo', 'info');
+    broadcastLiveAction('Restored Kilimani Heights dataset', 'info');
     setTimeout(() => {
       window.location.reload();
     }, 800);
@@ -193,7 +189,7 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Client Mockup & Database Center"
+      title="Estate Provisioning & Database Engine"
       maxWidth="2xl"
     >
       <div className="flex flex-col gap-4 text-xs select-none">
@@ -202,12 +198,12 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
           <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <h3 className="font-bold text-slate-100 text-xs">
-              Tailor the Mockup to Your Client's Exact Building
+              Configure Property Layout & Seed Operational Data
             </h3>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              When pitching a landlord, showing their building name, exact house numbering format
-              (e.g., G1 to G9, A1 to A9), and realistic rent prices closes deals immediately. This creates a
-              custom SQLite database with authentic Kenyan tenants, M-Pesa receipts, and balances.
+              Configure building dimensions, floor plans, and authentic Kenyan unit numbering formats
+              (e.g., G1 to G9, A1 to A9). Provisions a live relational database with active tenant profiles,
+              M-Pesa statements, and balance ledgers.
             </p>
           </div>
         </div>
@@ -218,7 +214,7 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-slate-300 font-semibold mb-1">
-                Client / Landlord Name
+                Landlord / Owner Name
               </label>
               <input
                 type="text"
@@ -424,7 +420,7 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
                 disabled={isGenerating}
                 className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition"
               >
-                Reset Default Demo
+                Load Default Sample
               </button>
               <button
                 type="button"
@@ -451,7 +447,7 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>
-                  {isGenerating ? 'Building Database...' : `Generate ${totalUnits}-Unit Mockup`}
+                  {isGenerating ? 'Provisioning Database...' : `Provision ${totalUnits}-Unit Estate`}
                 </span>
               </button>
             </div>

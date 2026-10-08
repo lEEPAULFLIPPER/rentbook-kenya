@@ -1,7 +1,5 @@
-// =====================================================================
-// RENTBOOK KENYA — COLLAPSIBLE SIDEBAR (Optimized for Chromebook 1366x768)
-// Icon-only default to maximize screen width; expands smoothly on hover/toggle
-// =====================================================================
+// RentBook Kenya - Collapsible Sidebar Navigation
+
 
 import React, { useState } from 'react';
 import {

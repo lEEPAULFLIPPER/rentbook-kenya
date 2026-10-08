@@ -329,7 +329,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const next = !prev;
       localStorage.setItem('rentbook_pitch_mode', String(next));
       broadcastLiveAction(
-        next ? '🎯 Client Presentation Mode Activated' : 'Standard Management Mode Restored',
+        next ? 'Executive Presentation View Enabled' : 'Standard Operations View Restored',
         'info'
       );
       return next;
@@ -477,7 +477,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Broadcast channel for multi-tab simultaneous testing on same Chromebook
+  // Broadcast channel for multi-tab cross-window synchronization
   useEffect(() => {
     let channel: BroadcastChannel | null = null;
     try {
@@ -926,7 +926,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       before_json: before,
       after_json: after,
       reason,
-      device_info: `${navigator.userAgent.includes('CrOS') ? 'ChromeOS (Chromebook)' : 'Web Client'} (${window.innerWidth}x${window.innerHeight})`,
+      device_info: `${/Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'Mobile Client' : 'Desktop Workstation'} (${window.innerWidth}x${window.innerHeight})`,
       created_at: new Date().toISOString(),
     };
 

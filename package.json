@@ -1,7 +1,10 @@
 {
   "name": "rentbook-kenya",
-  "private": true,
   "version": "1.0.0",
+  "description": "Multi-user rental management engine and digital cash book for Kenyan property managers, landlords, and caretakers",
+  "author": "davinci <davinci@rentbook.ke>",
+  "license": "UNLICENSED",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host",

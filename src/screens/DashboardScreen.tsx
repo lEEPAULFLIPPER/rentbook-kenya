@@ -1,8 +1,5 @@
-// =====================================================================
-// RENTBOOK KENYA — DASHBOARD SCREEN
-// Tuned for Acer Chromebook Spin 311 (1366x768) & Mobile Phones
-// Compact 4-column KPI grid, arrears alerts, quick action bar, pending approvals
-// =====================================================================
+// RentBook Kenya - Executive Financial Dashboard
+
 
 import React from 'react';
 import {

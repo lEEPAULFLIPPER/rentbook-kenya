@@ -1,7 +1,5 @@
-// =====================================================================
-// RENTBOOK KENYA — KEYBOARD SHORTCUTS ENGINE
-// Tuned for Acer Chromebook Spin 311: Ctrl+K, "/", "N", "E", Escape
-// =====================================================================
+// RentBook Kenya - Global Keyboard Shortcuts
+
 
 import { useEffect } from 'react';
 

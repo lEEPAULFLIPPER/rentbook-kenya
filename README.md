@@ -1,164 +1,151 @@
 # RentBook Kenya 🇰🇪
-> **Multi-User Rental Management & Digital Cash Book for Kenyan Flats & Apartments**  
-> Built for simultaneous real-time use by **Admin** (Acer Chromebook Spin 311), **Landlord** (Phone), and **Caretaker** (Phone).
+
+> **Production-grade multi-user rental management system & digital cash book engine engineered for Kenyan apartments, flats, and commercial estates.**
+
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.0-61dafb.svg)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38b2ac.svg)](https://tailwindcss.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-3.46-003B57.svg)](https://www.sqlite.org/)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](#)
 
 ---
 
-## ⚡ Quick Architecture Overview
+## ⚡ System Architecture
 
-RentBook Kenya is a production-grade, progressive web application (PWA) with real-time multi-device sync, role-based access control (RLS), and authentic Kenyan compound conventions (Scheme 1–6 house naming, M-Pesa receipts, waterfall arrears, and Swahili/English SMS reminders).
+RentBook Kenya is architected as an offline-first, multi-role Progressive Web Application (PWA). It provides high-speed administrative operation for property managers, financial oversight for landlords, and rapid corridor payment entry for caretakers.
 
 ```
-   ┌────────────────────────────────────────────────────────┐
-   │            Acer Chromebook Spin 311 (ChromeOS)         │
-   │               ADMIN (Master Control Cockpit)           │
-   │     - 1366 x 768 Compact Layout & Keyboard Shortcuts   │
-   │     - View-As Preview Mode, Full Audit Log, Danger Zone│
-   └──────────────────────────┬─────────────────────────────┘
-                              │ Realtime Sync
-                              ▼
-        ┌───────────────────────────────────────────┐
-        │   Supabase Postgres + Auth + Realtime RLS │
-        └─────────────────────┬─────────────────────┘
-                              │ Realtime Sync
-         ┌────────────────────┴────────────────────┐
-         ▼                                         ▼
+       ┌────────────────────────────────────────────────────────┐
+       │                Desktop / Admin Console                 │
+       │    - Full Financial Ledger, Audit Trail & Settings     │
+       │    - Estate Provisioning & Naming Format Generator     │
+       │    - Command Palette (Ctrl+K) & Fast Excel Grid Entry  │
+       └──────────────────────────┬─────────────────────────────┘
+                                  │ Real-Time Sync
+                                  ▼
+         ┌────────────────────────────────────────────────────────┐
+         │     Database Layer: SQLite 3 (WAL) / Supabase Cloud    │
+         │  - ACID Transactions, Append-Only Logs, RLS Security   │
+         │  - Multi-Tier Cache with Embedded IndexedDB Offline    │
+         └────────────────────────┬───────────────────────────────┘
+                                  │ Encrypted WebSocket Sync
+          ┌───────────────────────┴───────────────────────┐
+          ▼                                               ▼
 ┌───────────────────────────────┐   ┌───────────────────────────────┐
-│     Landlord (Phone Browser)  │   │    Caretaker (Phone Browser)  │
-│ - Own property financials     │   │ - Fast payment entry (<15s)   │
-│ - Approves caretaker entries  │   │ - Property expense logging    │
-│ - Arrears & Master Rent Roll  │   │ - Arrears glance on rounds    │
-│ - Pre-filled polite SMS       │   │ - Offline queueing if no net  │
+│   Landlord Mobile Client      │   │   Caretaker Mobile Client     │
+│ - Property portfolio metrics  │   │ - Fast payment entry (<15s)   │
+│ - Approves caretaker entries  │   │ - M-Pesa reference validation │
+│ - Arrears aging & statements  │   │ - Property expense logging    │
+│ - WhatsApp receipt generator  │   │ - Offline queueing in bounds  │
 └───────────────────────────────┘   └───────────────────────────────┘
 ```
 
 ---
 
-## 🌐 PATH A: NO-TERMINAL PATH (100% Inside Chrome Browser)
-*Recommended for your Acer Chromebook Spin 311 — you never need to open a terminal.*
+## 🚀 Key Modules & Features
 
-### Step 1: Create Your Free Supabase Project in Chrome
-1. In your Chromebook's Chrome browser, open **[supabase.com](https://supabase.com)** and sign in with GitHub or your Google account.
-2. Click **"New Project"**.
-3. Fill in:
-   - **Name:** `RentBook Kenya`
-   - **Database Password:** Enter a secure password and save it.
-   - **Region:** Pick **Europe (Frankfurt)** or **Middle East / Africa** for the lowest latency to Kenya.
-4. Click **"Create new project"** (takes ~1 minute to spin up).
+### 1. Multi-Tier Relational Database Engine
+* **Local Relational Core:** Native SQLite 3 engine with Write-Ahead Logging (`WAL`), strict foreign keys, and sub-millisecond local query resolution via a zero-dependency Python API service.
+* **Cloud Database Synchronization:** Automated synchronization pipeline with Supabase PostgreSQL, supporting Row-Level Security (`RLS`) and multi-client broadcast events.
+* **Offline Fallback:** Embedded client-side IndexedDB persistence ensures continuous operations even in cellular dead zones.
 
----
+### 2. Authentic Kasuku Counter Book Ledger
+* **Sequential House Ordering:** Renders units in strict physical floor sequence (`G1..G9`, `A1..A9`, `B1..B9` or `101..109`).
+* **Multi-Receipt Grouping:** Combines partial tenant payments within the same physical house block while preserving distinct receipt references and timestamps.
+* **Tamper-Resistant Cash Book Lock 🔒:** Protects historical financial periods from accidental edits while allowing rapid spreadsheet-style grid entry when unlocked.
 
-### Step 2: Run Database Schema & Seed Data in Supabase SQL Editor
-1. In the left sidebar of your Supabase dashboard, click the **SQL Editor** icon (`>_`).
-2. Click **"New query"**.
-3. Open [`supabase/schema.sql`](file:///home/davinci/rentbook-kenya/supabase/schema.sql), copy the entire SQL text, paste it into the editor, and click **"Run"** (green button).  
-   *This creates all tables (`profiles`, `properties`, `property_access`, `units`, `tenants`, `payments`, `expenses`, `audit_log`, `settings`), triggers, indexes, and Row-Level Security policies.*
-4. Open a second query tab in the SQL Editor.
-5. Copy the contents of [`supabase/seed.sql`](file:///home/davinci/rentbook-kenya/supabase/seed.sql), paste it, and click **"Run"**.  
-   *This loads Kilimani Heights (12 units A1..C4, 9 tenants, Brian Otieno's KSh 22,000 arrears, and one pending caretaker payment waiting for your approval).*
+### 3. Kenyan Estate Provisioning & Unit Naming System
+* **Kenyan Floor Letters (Standard):** Ground Floor (`G1..G9`), 1st Floor (`A1..A9`), 2nd Floor (`B1..B9`).
+* **100-Series Floor Numbers:** Ground Floor (`G1..G9` or `1..9`), 1st Floor (`101..109`), 2nd Floor (`201..209`).
+* **Corridor Floor + Unit Letters:** Ground Floor (`GA..GI`), 1st Floor (`1A..1I`), 2nd Floor (`2A..2I`).
+* **Sequential & Prefix Formats:** Numbered blocks (`1..N`) and villa plots (`House 1..N`).
+* **Interactive Live Preview:** Real-time visual badge rendering before committing database migrations.
 
----
+### 4. Official Printable Rent Receipts
+* **Formal Kenyan Receipt Modal:** Complies with Kenyan tenancy standards, complete with amount-in-words conversion (`Kenya Shillings ... Only`), authorized landlord stamp, print stylesheet, and 1-click WhatsApp transmission.
 
-### Step 3: Get Your API Keys
-1. In Supabase, click **Project Settings** (gear icon at the bottom left) -> **API**.
-2. Find:
-   - **Project URL:** `https://xyzcompany.supabase.co`
-   - **Project API keys -> `anon` / `public`:** `eyJhbGciOi...`
-3. Leave this tab open.
+### 5. Role-Based Access Control (RBAC)
+* **System Administrator:** Global estate provisioning, system configuration, database dumps, and irreversible operations.
+* **Landlord:** Portfolio cash flows, payment approvals, expense monitoring, and arrears aging.
+* **Caretaker:** Rapid payment collection, compound maintenance expense submissions, and tenant phone directory.
 
 ---
 
-### Step 4: Deploy to Vercel in 2 Minutes (Free Hosted URL)
-1. In Chrome, open **[vercel.com](https://vercel.com)** and log in.
-2. Click **"Add New..." -> "Project"**.
-3. Import your GitHub repository for `rentbook-kenya`.
-4. Under **Environment Variables**, add:
-   - `VITE_SUPABASE_URL` = your Supabase Project URL
-   - `VITE_SUPABASE_ANON_KEY` = your Supabase `anon` key
-5. Click **"Deploy"**.
-6. Within 60 seconds, Vercel will give you your live URL (e.g. `https://rentbook-kenya.vercel.app`).
+## 🛠️ Tech Stack
+
+* **Frontend:** React 19, TypeScript 5.7, Tailwind CSS v4, Lucide Icons, Vite 6
+* **Backend Engine:** Python 3.13 standard library (`http.server`, `sqlite3`), SQLite 3.46 with WAL
+* **Cloud Database:** PostgreSQL / Supabase with Row-Level Security
+* **Persistence:** SQLite WAL + IndexedDB Browser Store
+* **Deployment:** Vercel (Edge CDN) + Custom Domain
 
 ---
 
-### Step 5: Install as a PWA on your Acer Chromebook
-1. Open your live URL in Chrome on the Chromebook.
-2. Look at the right side of Chrome's address bar: click the **Install icon** (monitor with a down arrow) or click the 3-dots menu -> **"Install RentBook Kenya"**.
-3. Click **"Install"**.
-4. The app now launches in its own dedicated, chromeless window!
-5. Right-click the app icon in your ChromeOS shelf (taskbar) and select **"Pin"**.
+## 💻 Local Development Setup
 
----
+### Prerequisites
+* **Node.js** v18+ and **npm**
+* **Python** 3.10+ (standard library only, zero pip dependencies required)
 
-### Step 6: Install on Landlord and Caretaker Phones
-1. Send the same URL to the Landlord and Caretaker on WhatsApp or SMS.
-2. On Android (Chrome): Tap the 3 dots in the top right -> **"Add to Home Screen"** or **"Install app"**.
-3. On iPhone (Safari): Tap the Share button (square with arrow) -> **"Add to Home Screen"**.
-4. Both now have full phone-first access that works offline in compound corridors.
+### Getting Started
 
----
-
-## 💻 PATH B: LOCAL TERMINAL PATH (Chromebook Linux Crostini)
-*Use this if you prefer running a local development server on your laptop.*
-
-### Enabling Linux on ChromeOS (if not already enabled)
-1. On your Chromebook, open **Settings** (gear icon).
-2. Click **Advanced** -> **Developers**.
-3. Next to **Linux development environment (Beta)**, click **"Turn on"**.
-4. Follow the on-screen prompts and allocate 10–15 GB of disk space.
-5. Once installed, search for **Terminal** in your Chromebook launcher and open it.
-
-### Launching RentBook Kenya Locally
 ```bash
-# 1. Navigate to the project directory
-cd /home/davinci/rentbook-kenya
+# 1. Clone repository
+git clone git@github.com:lEEPAULFLIPPER/rentbook-kenya.git
+cd rentbook-kenya
 
 # 2. Install dependencies
 npm install
 
-# 3. Start local development server
+# 3. Start local SQLite API server (Port 3001)
+python3 server/db_server.py 3001 &
+
+# 4. Start frontend development server
 npm run dev
 ```
-Open **`http://localhost:5173`** in your Chromebook's Chrome browser.
+
+Open `http://localhost:5173` in your browser.
 
 ---
 
-## 🔑 Demo Personas & Instant 1-Click Role Testing
+## ⌨️ Productivity Keyboard Shortcuts
 
-RentBook Kenya includes a live simulator in the top-right header so you can test all 3 roles simultaneously without needing multiple logins:
-
-| Role | Name | Device / Focus | Permissions & Capabilities |
-| :--- | :--- | :--- | :--- |
-| **Admin** | You (Chromebook Master) | Acer Chromebook Spin 311 | Master control: views all properties, full append-only audit log, user invites, settings, danger zone (`DELETE` confirmation), and "View As" preview mode. |
-| **Landlord** | David Kimani | Phone | Full financial oversight of Kilimani Heights, approves/rejects caretaker payments, arrears aging, master rent roll, and CSV tax export. |
-| **Caretaker** | Jackson Omondi | Phone | Fast payment recording (<15s), compound repairs & utility expense logging, tenant contact roster with tap-to-call/SMS, offline queueing. **Cannot** delete records or alter rent amounts. |
-
----
-
-## ⌨️ Acer Chromebook Spin 311 Keyboard Shortcuts
-
-Designed for high-speed administration on an 11.6" screen:
-
-* `Ctrl + K` or `/` : Open **Command Palette** (jump directly to any unit, tenant, or action)
-* `N` : Open **Record Rent Payment** modal
-* `E` : Open **Add Compound Expense** modal
-* `Esc` : Close any active modal, sheet, or command palette
-* `Tab` / `Enter` : Full keyboard focus outlines and form submission
+| Shortcut | Action |
+| :--- | :--- |
+| `Ctrl + K` or `/` | Open Command Palette (Jump to unit, tenant, or screen) |
+| `N` | Open **Record Rent Payment** modal |
+| `E` | Open **Add Compound Expense** modal |
+| `Esc` | Close active modal, sheet, or command palette |
 
 ---
 
-## 🇰🇪 Kenyan Flat Conventions Supported
+## 🚢 Production Build & Deployment
 
-1. **Auto-Naming Schemes (Scheme 1 to 6):**
-   - Scheme 1 (Kenyan Default): Ground = `A1..A4`, 1st = `B1..B4`, 2nd = `C1..C4`
-   - Scheme 2: `G1..G4`, `F1..F4`, `S1..S4`, `T1..T4`
-   - Scheme 3: Sequential `1, 2, 3, 4, 5...`
-   - Scheme 4: `1A..1D`, `2A..2D`, `GA..GD`
-   - Scheme 5: `House 1`, `Unit 1`, `Door 1`
-   - Scheme 6: Custom tokens (`{block}-{floor}{index}`)
-2. **Waterfall Arrears Allocation:**
-   - Payments apply to the oldest unpaid month first. Supports partial payments with live remaining debt calculation.
-3. **SMS Rent Reminders:**
-   - Pre-filled in Swahili: `Habari {name}, kumbusho la kodi ya nyumba {unit} ni KSh {amount}. Asante.`
-   - Pre-filled in English: `Hello {name}, polite reminder that rent for house {unit} is KSh {amount}. Thank you.`
-4. **Append-Only Audit Log:**
-   - Every single database transaction stores actor, role, table, timestamp, device info, and before/after JSON states.
+```bash
+# Type check and production bundle
+npm run build
+
+# Preview production build locally
+npm run preview
+```
+
+### Cloud Environment Variables
+To connect Supabase Cloud:
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-public-key
+```
+
+---
+
+## 👤 Author & Engineering
+
+* **Lead Architect:** [lEEPAULFLIPPER](https://github.com/lEEPAULFLIPPER)  
+* **System:** RentBook Kenya Engineering  
+* **Contact:** `davinci@rentbook.ke`
+
+---
+
+## 📄 License
+
+Proprietary Software. All rights reserved © 2026 RentBook Kenya.

@@ -1,7 +1,5 @@
-// =====================================================================
-// RENTBOOK KENYA — TOPNAV BAR (Tuned for Chromebook 1366x768 & Split Screen)
-// Compact layout, sticky, quick actions, role indicator & persona switch
-// =====================================================================
+// RentBook Kenya - Top Navigation Bar
+
 
 import React, { useState } from 'react';
 import {
@@ -209,12 +207,12 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
           <span className="font-semibold sm:hidden">Share</span>
         </button>
 
-        {/* Database Cockpit & Mockup Setup */}
+        {/* Database Cockpit & Estate Setup */}
         <button
           type="button"
           onClick={() => openClientMockupModal()}
           className="hidden md:flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700/80 transition active:scale-95 min-h-[36px]"
-          title="SQLite Database & Client Mockup Setup"
+          title="Database Engine & Estate Setup"
         >
           <Database className={`w-3.5 h-3.5 ${activeDatabaseEngine === 'sqlite' ? 'text-emerald-400' : 'text-sky-400'}`} />
           <span className="hidden lg:inline">
@@ -222,7 +220,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
           </span>
         </button>
 
-        {/* Pitch Mode Toggle */}
+        {/* Presentation View Toggle */}
         <button
           type="button"
           onClick={() => togglePresentationMode()}
@@ -231,10 +229,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
               ? 'bg-emerald-950 text-emerald-200 border-emerald-600'
               : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700'
           }`}
-          title="Toggle Client Mockup Presentation Mode"
+          title="Toggle Executive Presentation View"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span className="hidden lg:inline">{isPresentationMode ? 'Pitch Active' : 'Pitch Mode'}</span>
+          <span className="hidden lg:inline">{isPresentationMode ? 'Executive View' : 'Present'}</span>
         </button>
 
         {/* Pending approvals badge */}
@@ -276,7 +274,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onOpenCommandPalette }) => {
                 <div className="text-[10px] text-slate-400">{currentUser.phone || 'Phone: 0700000000'}</div>
               </div>
 
-              {/* 1-Click Persona Simulator for Chromebook Admin */}
+              {/* Role switcher for administrative testing */}
               <div className="py-1">
                 <div className="px-3 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <SlidersHorizontal className="w-3 h-3 text-slate-400" />
