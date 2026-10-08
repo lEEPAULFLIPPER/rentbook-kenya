@@ -25,6 +25,7 @@ export interface ClientMockupConfig {
   monthlyRent: number;
   namingScheme?: string;
   groundConvention?: string;
+  customUnits?: Array<{ floor: number; name: string; rent?: number }>;
 }
 
 const API_BASE = '/api';

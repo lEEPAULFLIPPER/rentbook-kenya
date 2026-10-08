@@ -196,6 +196,7 @@ class RentBookApiHandler(BaseHTTPRequestHandler):
                 monthly_rent = float(body.get("monthlyRent", 22000))
                 naming_scheme = body.get("namingScheme", "scheme1")
                 ground_convention = body.get("groundConvention", "G")
+                custom_units = body.get("customUnits")
 
                 result = db.seed_custom_mockup(
                     client_name=client_name,
@@ -205,7 +206,8 @@ class RentBookApiHandler(BaseHTTPRequestHandler):
                     units_per_floor=units_per_floor,
                     monthly_rent=monthly_rent,
                     naming_scheme=naming_scheme,
-                    ground_convention=ground_convention
+                    ground_convention=ground_convention,
+                    custom_units=custom_units
                 )
                 return self.send_json(result)
 

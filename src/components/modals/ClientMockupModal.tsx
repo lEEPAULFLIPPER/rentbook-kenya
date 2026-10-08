@@ -1,18 +1,20 @@
 // RentBook Kenya - Estate Provisioning & Database Engine
+// Supports dynamic gallery-style unit management: add, rename, multi-select, and delete
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Building2,
-  CheckCircle2,
-  Database,
+  Check,
+  CheckSquare,
   Download,
   Eye,
-  Hash,
-  Layers,
-  MapPin,
-  RefreshCw,
+  Pencil,
+  Plus,
+  RotateCcw,
   Sparkles,
+  Square,
   Tag,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { useApp } from '../../context/AppContext';
@@ -25,6 +27,13 @@ interface ClientMockupModalProps {
 
 export type NamingSchemeKey = 'scheme1' | 'scheme2' | 'scheme3' | 'scheme4' | 'scheme5';
 export type GroundConventionKey = 'G' | 'GF' | 'Ground' | 'Letter';
+
+export interface GalleryUnitItem {
+  id: string;
+  floorIndex: number;
+  name: string;
+  monthlyRent?: number;
+}
 
 export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, onClose }) => {
   const { broadcastLiveAction } = useApp();
@@ -42,11 +51,11 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
   // Available floors range
   const floorOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12];
 
-  // Expanded Units per Floor list specifically highlighting 9 and full real-estate options
+  // Units per floor dropdown options (clean numbers, no stars or eg text)
   const unitOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 18, 20, 24];
 
-  // Helper to compute sample unit names identical to backend logic
-  const previewUnitName = (
+  // Helper to compute standard unit naming
+  const computeUnitName = (
     fl: number,
     uNum: number,
     globalSeq: number,
@@ -56,7 +65,6 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
     const floorLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T'];
 
     if (scheme === 'scheme2') {
-      // 100-series: Ground -> G1..G9 (or 1..9), 1st -> 101..109, 2nd -> 201..209
       if (fl === 0) {
         if (ground === 'G') return `G${uNum}`;
         if (ground === 'GF') return `GF${uNum}`;
@@ -67,12 +75,10 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
     }
 
     if (scheme === 'scheme3') {
-      // Sequential: 1, 2, 3 ...
       return `${globalSeq}`;
     }
 
     if (scheme === 'scheme4') {
-      // Floor + Letter: GA..GI, 1A..1I, 2A..2I
       const uLetter = uNum <= 26 ? String.fromCharCode(64 + uNum) : `${uNum}`;
       let flPrefix = `${fl}`;
       if (fl === 0) {
@@ -82,11 +88,10 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
     }
 
     if (scheme === 'scheme5') {
-      // Word prefix: House 1..N
       return `House ${globalSeq}`;
     }
 
-    // Default scheme1: Kenyan Floor Letters (Ground G1..G9, 1st A1..A9, 2nd B1..B9)
+    // Default scheme1: Floor letters
     if (fl === 0) {
       if (ground === 'Letter') return `A${uNum}`;
       if (ground === 'Ground') return `Ground ${uNum}`;
@@ -98,18 +103,178 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
     return `${prefix}${uNum}`;
   };
 
-  // Generate live preview chips for all floors
-  const previewFloors = useMemo(() => {
-    const results: Array<{
+  // Gallery UX State
+  const [units, setUnits] = useState<GalleryUnitItem[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isCustomized, setIsCustomized] = useState(false);
+
+  // Inline editing state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+
+  // Add unit state
+  const [addingFloor, setAddingFloor] = useState<number | null>(null);
+  const [addingName, setAddingName] = useState('');
+
+  // Generate default units from formula
+  const generateTemplateUnits = (
+    fls: number,
+    upf: number,
+    scheme: NamingSchemeKey,
+    ground: GroundConventionKey,
+    rent: number
+  ): GalleryUnitItem[] => {
+    const list: GalleryUnitItem[] = [];
+    let seq = 0;
+    for (let fl = 0; fl < fls; fl++) {
+      for (let u = 1; u <= upf; u++) {
+        seq++;
+        list.push({
+          id: `u-${fl}-${u}-${seq}`,
+          floorIndex: fl,
+          name: computeUnitName(fl, u, seq, scheme, ground),
+          monthlyRent: rent,
+        });
+      }
+    }
+    return list;
+  };
+
+  // Re-sync template when floors/upf/scheme changes unless user made custom edits
+  useEffect(() => {
+    if (!isCustomized) {
+      const generated = generateTemplateUnits(floors, unitsPerFloor, namingScheme, groundConvention, monthlyRent);
+      setUnits(generated);
+      setSelectedIds(new Set());
+    }
+  }, [floors, unitsPerFloor, namingScheme, groundConvention, monthlyRent, isCustomized]);
+
+  // Reset to auto-generated scheme template
+  const handleResetToTemplate = () => {
+    const generated = generateTemplateUnits(floors, unitsPerFloor, namingScheme, groundConvention, monthlyRent);
+    setUnits(generated);
+    setSelectedIds(new Set());
+    setIsCustomized(false);
+    setEditingId(null);
+    setAddingFloor(null);
+    broadcastLiveAction('Reset layout to standard scheme template', 'info');
+  };
+
+  // Multi-selection handlers
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === units.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(units.map((u) => u.id)));
+    }
+  };
+
+  // Delete handlers
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    setUnits((prev) => prev.filter((u) => !selectedIds.has(u.id)));
+    setSelectedIds(new Set());
+    setIsCustomized(true);
+    broadcastLiveAction('Deleted selected units from layout', 'warning');
+  };
+
+  const handleDeleteAll = () => {
+    if (units.length === 0) return;
+    if (!window.confirm('Delete all units in the layout preview? You can reset to template anytime.')) return;
+    setUnits([]);
+    setSelectedIds(new Set());
+    setIsCustomized(true);
+    broadcastLiveAction('Cleared all units from layout', 'warning');
+  };
+
+  const handleDeleteSingle = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setUnits((prev) => prev.filter((u) => u.id !== id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    setIsCustomized(true);
+  };
+
+  // Inline rename handlers
+  const handleStartRename = (u: GalleryUnitItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingId(u.id);
+    setEditingText(u.name);
+  };
+
+  const handleSaveRename = (id: string) => {
+    const trimmed = editingText.trim();
+    if (!trimmed) {
+      setEditingId(null);
+      return;
+    }
+    setUnits((prev) =>
+      prev.map((u) => (u.id === id ? { ...u, name: trimmed } : u))
+    );
+    setEditingId(null);
+    setIsCustomized(true);
+  };
+
+  const handleCancelRename = () => {
+    setEditingId(null);
+    setEditingText('');
+  };
+
+  // Add unit handler
+  const handleStartAdd = (floorIndex: number) => {
+    setAddingFloor(floorIndex);
+    // Suggest next sensible name for floor
+    const floorUnits = units.filter((u) => u.floorIndex === floorIndex);
+    const count = floorUnits.length + 1;
+    setAddingName(`House ${count}`);
+  };
+
+  const handleSaveAdd = (floorIndex: number) => {
+    const trimmed = addingName.trim();
+    if (!trimmed) {
+      setAddingFloor(null);
+      return;
+    }
+    const newUnit: GalleryUnitItem = {
+      id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      floorIndex,
+      name: trimmed,
+      monthlyRent,
+    };
+    setUnits((prev) => [...prev, newUnit]);
+    setAddingFloor(null);
+    setAddingName('');
+    setIsCustomized(true);
+    broadcastLiveAction(`Added ${trimmed} to Floor ${floorIndex}`, 'success');
+  };
+
+  const handleCancelAdd = () => {
+    setAddingFloor(null);
+    setAddingName('');
+  };
+
+  // Group units by floor
+  const floorsList = useMemo(() => {
+    const result: Array<{
       floorIndex: number;
       label: string;
-      units: string[];
+      units: GalleryUnitItem[];
     }> = [];
 
-    let currentSeq = 0;
     for (let fl = 0; fl < floors; fl++) {
-      const unitsOnFloor: string[] = [];
-      const floorTitle =
+      const label =
         fl === 0
           ? 'Ground Floor'
           : fl === 1
@@ -120,28 +285,29 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
           ? '3rd Floor'
           : `${fl}th Floor`;
 
-      for (let u = 1; u <= unitsPerFloor; u++) {
-        currentSeq++;
-        unitsOnFloor.push(previewUnitName(fl, u, currentSeq, namingScheme, groundConvention));
-      }
-
-      results.push({
+      result.push({
         floorIndex: fl,
-        label: floorTitle,
-        units: unitsOnFloor,
+        label,
+        units: units.filter((u) => u.floorIndex === fl),
       });
     }
 
-    return results;
-  }, [floors, unitsPerFloor, namingScheme, groundConvention]);
+    return result;
+  }, [floors, units]);
 
-  const totalUnits = floors * unitsPerFloor;
-  const totalMonthlyRoll = totalUnits * monthlyRent;
+  const totalUnits = units.length;
+  const totalMonthlyRoll = units.reduce((sum, u) => sum + (u.monthlyRent || monthlyRent), 0);
+  const allSelected = units.length > 0 && selectedIds.size === units.length;
 
   if (!isOpen) return null;
 
   const handleGenerateMockup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (units.length === 0) {
+      alert('Please configure at least 1 unit before provisioning.');
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
@@ -154,6 +320,11 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
         monthlyRent: Number(monthlyRent),
         namingScheme,
         groundConvention,
+        customUnits: units.map((u) => ({
+          floor: u.floorIndex,
+          name: u.name,
+          rent: u.monthlyRent || monthlyRent,
+        })),
       });
 
       if (res.success) {
@@ -201,9 +372,8 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
               Configure Property Layout & Seed Operational Data
             </h3>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Configure building dimensions, floor plans, and authentic Kenyan unit numbering formats
-              (e.g., G1 to G9, A1 to A9). Provisions a live relational database with active tenant profiles,
-              M-Pesa statements, and balance ledgers.
+              Configure building dimensions and customize your exact door labels. You can rename, add,
+              delete, or multi-select units in the live gallery below before provisioning the database.
             </p>
           </div>
         </div>
@@ -302,7 +472,7 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
               >
                 {unitOptions.map((u) => (
                   <option key={u} value={u}>
-                    {u} Units per floor {u === 9 ? '⭐ (e.g. G1..G9 / 101..109)' : ''}
+                    {u} Units per floor
                   </option>
                 ))}
               </select>
@@ -311,11 +481,18 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
 
           {/* Section 2: Unit Naming & Numbering Format System */}
           <div className="border border-slate-800 bg-slate-900/70 p-3.5 space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-              <Tag className="w-4 h-4 text-emerald-400" />
-              <h4 className="font-bold text-slate-200 text-xs tracking-wide uppercase">
-                Unit Naming & House Numbering Format System
-              </h4>
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800 flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-emerald-400" />
+                <h4 className="font-bold text-slate-200 text-xs tracking-wide uppercase">
+                  Unit Naming & House Numbering Format System
+                </h4>
+              </div>
+              {isCustomized && (
+                <span className="text-[10px] bg-amber-950/80 text-amber-300 border border-amber-800/80 px-2 py-0.5 font-semibold">
+                  Custom Layout Active
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -325,7 +502,10 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
                 </label>
                 <select
                   value={namingScheme}
-                  onChange={(e) => setNamingScheme(e.target.value as NamingSchemeKey)}
+                  onChange={(e) => {
+                    setNamingScheme(e.target.value as NamingSchemeKey);
+                    setIsCustomized(false);
+                  }}
                   className="w-full bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100 min-h-[38px] focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="scheme1">
@@ -338,10 +518,10 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
                     Floor Number + Unit Letter (GA..G{unitsPerFloor <= 26 ? String.fromCharCode(64 + unitsPerFloor) : 'N'}, 1A..1{unitsPerFloor <= 26 ? String.fromCharCode(64 + unitsPerFloor) : 'N'})
                   </option>
                   <option value="scheme3">
-                    Sequential House Numbers (1, 2, 3 ... {totalUnits})
+                    Sequential House Numbers (1, 2, 3 ... {floors * unitsPerFloor})
                   </option>
                   <option value="scheme5">
-                    Word Prefix (House 1, House 2 ... House {totalUnits})
+                    Word Prefix (House 1, House 2 ... House {floors * unitsPerFloor})
                   </option>
                 </select>
               </div>
@@ -352,7 +532,10 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
                 </label>
                 <select
                   value={groundConvention}
-                  onChange={(e) => setGroundConvention(e.target.value as GroundConventionKey)}
+                  onChange={(e) => {
+                    setGroundConvention(e.target.value as GroundConventionKey);
+                    setIsCustomized(false);
+                  }}
                   disabled={namingScheme === 'scheme3' || namingScheme === 'scheme5'}
                   className="w-full bg-slate-800 border border-slate-700 px-3 py-2 text-slate-100 min-h-[38px] focus:border-emerald-500 focus:outline-none disabled:opacity-40"
                 >
@@ -364,49 +547,257 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
               </div>
             </div>
 
-            {/* Live Interactive Unit Preview Box */}
-            <div className="mt-3 bg-slate-950/80 border border-slate-800/90 p-3 space-y-2.5">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-sky-400" />
-                  <span className="text-[11px] font-bold text-slate-200">
-                    Live Unit Numbering Preview
+            {/* Live Interactive Unit Preview Gallery UX */}
+            <div className="mt-3 bg-slate-950/90 border border-slate-800 p-3 space-y-3">
+              {/* Gallery Header & Bulk Action Toolbar */}
+              <div className="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-sky-400" />
+                  <span className="text-xs font-bold text-slate-100">
+                    Live Unit Gallery ({totalUnits} Units)
                   </span>
-                  <span className="text-[10px] text-slate-400">
-                    (How houses appear on client screens)
+                  <span className="text-[11px] font-mono font-semibold text-emerald-400">
+                    KES {totalMonthlyRoll.toLocaleString()} / mo
                   </span>
                 </div>
-                <div className="flex items-center gap-3 text-[11px] font-mono">
-                  <span className="text-slate-300">
-                    <strong className="text-white">{totalUnits}</strong> Units
-                  </span>
-                  <span className="text-emerald-400 font-semibold">
-                    KSh {totalMonthlyRoll.toLocaleString()} / mo
-                  </span>
+
+                {/* Gallery Toolbar Controls */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {/* Select All */}
+                  <button
+                    type="button"
+                    onClick={handleSelectAll}
+                    disabled={units.length === 0}
+                    className={`flex items-center gap-1 px-2 py-1 text-[11px] font-semibold border transition active:scale-95 ${
+                      allSelected
+                        ? 'bg-emerald-950 text-emerald-300 border-emerald-700'
+                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    }`}
+                  >
+                    {allSelected ? <CheckSquare className="w-3 h-3 text-emerald-400" /> : <Square className="w-3 h-3" />}
+                    <span>{allSelected ? 'Deselect All' : 'Select All'}</span>
+                  </button>
+
+                  {/* Delete Selected */}
+                  <button
+                    type="button"
+                    onClick={handleDeleteSelected}
+                    disabled={selectedIds.size === 0}
+                    className="flex items-center gap-1 px-2 py-1 bg-rose-950/70 hover:bg-rose-900/90 disabled:opacity-40 disabled:hover:bg-rose-950/70 text-rose-300 border border-rose-800/80 text-[11px] font-semibold transition active:scale-95"
+                    title="Delete chosen units"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Delete Selected ({selectedIds.size})</span>
+                  </button>
+
+                  {/* Delete All */}
+                  <button
+                    type="button"
+                    onClick={handleDeleteAll}
+                    disabled={units.length === 0}
+                    className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-rose-950 hover:text-rose-300 text-slate-300 border border-slate-700 hover:border-rose-800 text-[11px] font-semibold transition active:scale-95"
+                    title="Clear all units"
+                  >
+                    <X className="w-3 h-3" />
+                    <span>Delete All</span>
+                  </button>
+
+                  {/* Reset to Scheme Template */}
+                  {isCustomized && (
+                    <button
+                      type="button"
+                      onClick={handleResetToTemplate}
+                      className="flex items-center gap-1 px-2 py-1 bg-sky-950/80 hover:bg-sky-900 text-sky-300 border border-sky-800 text-[11px] font-semibold transition active:scale-95"
+                      title="Reset units back to calculated scheme layout"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Reset to Scheme</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {previewFloors.map((floor) => (
-                  <div
-                    key={floor.floorIndex}
-                    className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5 bg-slate-900/60 border border-slate-800/60 p-2"
-                  >
-                    <div className="text-[11px] font-bold text-sky-300 w-24 shrink-0">
-                      {floor.label}:
-                    </div>
-                    <div className="flex flex-wrap gap-1 items-center">
-                      {floor.units.map((unitName, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 font-mono text-[10px] font-semibold"
-                        >
-                          {unitName}
-                        </span>
-                      ))}
-                    </div>
+              {/* Gallery Floor Groups */}
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                {units.length === 0 ? (
+                  <div className="py-6 text-center text-slate-400 space-y-2 border border-dashed border-slate-800">
+                    <p className="text-xs">All units have been deleted.</p>
+                    <button
+                      type="button"
+                      onClick={handleResetToTemplate}
+                      className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs"
+                    >
+                      Restore Scheme Template ({floors * unitsPerFloor} Units)
+                    </button>
                   </div>
-                ))}
+                ) : (
+                  floorsList.map((floor) => (
+                    <div
+                      key={floor.floorIndex}
+                      className="bg-slate-900/80 border border-slate-800/80 p-2.5 space-y-2"
+                    >
+                      {/* Floor Header */}
+                      <div className="flex items-center justify-between flex-wrap gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-sky-300">
+                            {floor.label}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            ({floor.units.length} {floor.units.length === 1 ? 'unit' : 'units'})
+                          </span>
+                        </div>
+
+                        {/* Add Unit to Floor Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleStartAdd(floor.floorIndex)}
+                          className="flex items-center gap-1 px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 text-[10px] font-semibold transition active:scale-95"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add House</span>
+                        </button>
+                      </div>
+
+                      {/* Inline Add Unit Form for Floor */}
+                      {addingFloor === floor.floorIndex && (
+                        <div className="flex items-center gap-1.5 p-1.5 bg-slate-950 border border-emerald-600/80">
+                          <input
+                            type="text"
+                            autoFocus
+                            value={addingName}
+                            onChange={(e) => setAddingName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSaveAdd(floor.floorIndex);
+                              } else if (e.key === 'Escape') {
+                                handleCancelAdd();
+                              }
+                            }}
+                            placeholder="Unit name (e.g. Shop 1, Penthouse)"
+                            className="flex-1 bg-slate-900 border border-slate-700 px-2 py-1 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveAdd(floor.floorIndex)}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px]"
+                          >
+                            Add
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelAdd}
+                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px]"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Gallery Cards Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-1.5">
+                        {floor.units.map((unit) => {
+                          const isSelected = selectedIds.has(unit.id);
+                          const isEditing = editingId === unit.id;
+
+                          return (
+                            <div
+                              key={unit.id}
+                              onClick={() => !isEditing && handleToggleSelect(unit.id)}
+                              className={`group relative p-2 border transition select-none flex flex-col justify-between min-h-[58px] cursor-pointer ${
+                                isSelected
+                                  ? 'bg-emerald-950/80 border-emerald-500 ring-1 ring-emerald-500 text-emerald-100'
+                                  : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-200'
+                              }`}
+                            >
+                              {/* Card Top Row: Selection Checkbox & Actions */}
+                              <div className="flex items-center justify-between gap-1 mb-1">
+                                <div
+                                  className={`w-3.5 h-3.5 flex items-center justify-center border text-[9px] ${
+                                    isSelected
+                                      ? 'bg-emerald-500 border-emerald-400 text-black font-black'
+                                      : 'border-slate-600 bg-slate-800/80'
+                                  }`}
+                                >
+                                  {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                </div>
+
+                                <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition">
+                                  {/* Rename Button */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleStartRename(unit, e)}
+                                    title="Rename unit"
+                                    className="p-1 hover:bg-slate-800 text-slate-400 hover:text-sky-300 transition"
+                                  >
+                                    <Pencil className="w-2.5 h-2.5" />
+                                  </button>
+
+                                  {/* Delete Button */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleDeleteSingle(unit.id, e)}
+                                    title="Delete unit"
+                                    className="p-1 hover:bg-rose-950 text-slate-400 hover:text-rose-400 transition"
+                                  >
+                                    <Trash2 className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Card Body: Unit Name or Inline Editor */}
+                              {isEditing ? (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex items-center gap-1 pt-0.5"
+                                >
+                                  <input
+                                    type="text"
+                                    autoFocus
+                                    value={editingText}
+                                    onChange={(e) => setEditingText(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleSaveRename(unit.id);
+                                      } else if (e.key === 'Escape') {
+                                        handleCancelRename();
+                                      }
+                                    }}
+                                    className="w-full bg-slate-950 border border-sky-500 px-1 py-0.5 text-xs text-white font-mono focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveRename(unit.id)}
+                                    className="p-1 bg-emerald-600 hover:bg-emerald-500 text-white"
+                                  >
+                                    <Check className="w-2.5 h-2.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={handleCancelRename}
+                                    className="p-1 bg-slate-800 hover:bg-slate-700 text-slate-300"
+                                  >
+                                    <X className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div className="font-mono font-bold text-xs truncate">
+                                    {unit.name}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                    KES {(unit.monthlyRent || monthlyRent).toLocaleString()}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -442,7 +833,7 @@ export const ClientMockupModal: React.FC<ClientMockupModalProps> = ({ isOpen, on
               </button>
               <button
                 type="submit"
-                disabled={isGenerating}
+                disabled={isGenerating || units.length === 0}
                 className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow transition active:scale-95 min-h-[40px]"
               >
                 <Sparkles className="w-3.5 h-3.5" />

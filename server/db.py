@@ -337,8 +337,8 @@ def compute_mockup_unit_name(fl, u_num, global_seq, scheme='scheme1', ground='G'
 
 def seed_custom_mockup(client_name="James Kariuki", property_name="Parkview Apartments",
                        location="Ruaka, Kiambu Road", floors=3, units_per_floor=4, monthly_rent=22000,
-                       naming_scheme="scheme1", ground_convention="G"):
-    """Generates a complete, tailored mockup building for a client pitch with Kenyan naming format"""
+                       naming_scheme="scheme1", ground_convention="G", custom_units=None):
+    """Generates a complete, tailored building layout with Kenyan naming format or custom gallery units"""
     con = get_connection()
     cur = con.cursor()
 
@@ -392,62 +392,80 @@ def seed_custom_mockup(client_name="James Kariuki", property_name="Parkview Apar
     tenant_idx = 0
     total_units_created = 0
 
-    for fl in range(floors):
-        for u_num in range(1, units_per_floor + 1):
-            total_units_created += 1
-            unit_id = str(uuid.uuid4())
-            unit_name = compute_mockup_unit_name(fl, u_num, total_units_created, scheme=naming_scheme, ground=ground_convention)
+    # Build units list: either from custom_units or generated from floors & units_per_floor
+    units_to_build = []
+    if custom_units and isinstance(custom_units, list) and len(custom_units) > 0:
+        for cu in custom_units:
+            if isinstance(cu, dict):
+                fl = int(cu.get("floor", 0))
+                u_name = str(cu.get("name", "")).strip()
+                u_rent = float(cu.get("rent", monthly_rent))
+                if u_name:
+                    units_to_build.append((fl, u_name, u_rent))
+            elif isinstance(cu, str) and cu.strip():
+                units_to_build.append((0, cu.strip(), monthly_rent))
+    else:
+        seq = 0
+        for fl in range(floors):
+            for u_num in range(1, units_per_floor + 1):
+                seq += 1
+                u_name = compute_mockup_unit_name(fl, u_num, seq, scheme=naming_scheme, ground=ground_convention)
+                units_to_build.append((fl, u_name, monthly_rent))
+
+    for fl, unit_name, unit_rent in units_to_build:
+        total_units_created += 1
+        unit_id = str(uuid.uuid4())
+        
+        # ~85% occupancy: leave every 6th or 7th unit vacant
+        is_occupied = (total_units_created % 6 != 0)
+        status = 'occupied' if is_occupied else 'vacant'
+        
+        cur.execute("""
+            INSERT INTO units (id, property_id, floor_number, name, monthly_rent, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+        """, (unit_id, prop_id, fl, unit_name, unit_rent, status, f"Floor {fl} unit"))
+
+        if is_occupied:
+            fname = first_names[tenant_idx % len(first_names)]
+            lname = last_names[(tenant_idx * 3 + 1) % len(last_names)]
+            tenant_name = f"{fname} {lname}"
+            phone_num = f"07{20 + (tenant_idx % 70):02d}{100000 + (tenant_idx * 3421) % 900000}"
+            id_num = f"{27000000 + (tenant_idx * 13245) % 9000000}"
             
-            # ~85% occupancy: leave every 6th or 7th unit vacant
-            is_occupied = (total_units_created % 6 != 0)
-            status = 'occupied' if is_occupied else 'vacant'
-            
+            tenant_idx += 1
+            tenant_id = str(uuid.uuid4())
+
             cur.execute("""
-                INSERT INTO units (id, property_id, floor_number, name, monthly_rent, status, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?);
-            """, (unit_id, prop_id, fl, unit_name, monthly_rent, status, f"Floor {fl} unit"))
+                INSERT INTO tenants (id, unit_id, full_name, phone, id_number, move_in_date, deposit_paid, rent_due_day)
+                VALUES (?, ?, ?, ?, ?, '2026-06-01', ?, 5);
+            """, (tenant_id, unit_id, tenant_name, phone_num, id_num, monthly_rent))
 
-            if is_occupied:
-                fname = first_names[tenant_idx % len(first_names)]
-                lname = last_names[(tenant_idx * 3 + 1) % len(last_names)]
-                tenant_name = f"{fname} {lname}"
-                phone_num = f"07{20 + (tenant_idx % 70):02d}{100000 + (tenant_idx * 3421) % 900000}"
-                id_num = f"{27000000 + (tenant_idx * 13245) % 9000000}"
-                
-                tenant_idx += 1
-                tenant_id = str(uuid.uuid4())
-
+            # Payments: realistic mix of approved, pending caretaker, and partial with arrears
+            if tenant_idx == 1:
+                # Paid full M-Pesa
                 cur.execute("""
-                    INSERT INTO tenants (id, unit_id, full_name, phone, id_number, move_in_date, deposit_paid, rent_due_day)
-                    VALUES (?, ?, ?, ?, ?, '2026-06-01', ?, 5);
-                """, (tenant_id, unit_id, tenant_name, phone_num, id_num, monthly_rent))
-
-                # Payments: realistic mix of approved, pending caretaker, and partial with arrears
-                if tenant_idx == 1:
-                    # Paid full M-Pesa
-                    cur.execute("""
-                        INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name, approved_by, approved_at)
-                        VALUES (?, ?, ?, date('now', '-2 days'), ?, 'M-Pesa', 'QKJ78291A', ?, 'Full payment via Paybill', 'approved', ?, 'David Kimani (Landlord)', ?, datetime('now'));
-                    """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent, current_month, landlord_id, landlord_id))
-                elif tenant_idx == 2:
-                    # Caretaker pending payment
-                    cur.execute("""
-                        INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name)
-                        VALUES (?, ?, ?, date('now'), ?, 'M-Pesa', 'QKP90123M', ?, 'Caretaker collection via phone', 'pending', ?, 'Samson Njoroge (Caretaker)');
-                    """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent, current_month, caretaker_id))
-                elif tenant_idx == 3:
-                    # Partial payment (leaves arrears!)
-                    cur.execute("""
-                        INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name, approved_by, approved_at)
-                        VALUES (?, ?, ?, date('now', '-5 days'), ?, 'Cash', 'CSH-0021', ?, 'Partial rent, promises balance by 15th', 'approved', ?, 'David Kimani (Landlord)', ?, datetime('now'));
-                    """, (str(uuid.uuid4()), unit_id, tenant_id, max(1000, monthly_rent - 5000), current_month, landlord_id, landlord_id))
-                elif tenant_idx % 2 == 0:
-                    # Approved payment
-                    ref_code = f"QKX{tenant_idx:02d}920"
-                    cur.execute("""
-                        INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name, approved_by, approved_at)
-                        VALUES (?, ?, ?, date('now', '-3 days'), ?, 'M-Pesa', ?, ?, 'Rent paid via Till', 'approved', ?, 'David Kimani (Landlord)', ?, datetime('now'));
-                    """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent, ref_code, current_month, landlord_id, landlord_id))
+                    INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name, approved_by, approved_at)
+                    VALUES (?, ?, ?, date('now', '-2 days'), ?, 'M-Pesa', 'QKJ78291A', ?, 'Full payment via Paybill', 'approved', ?, 'David Kimani (Landlord)', ?, datetime('now'));
+                """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent, current_month, landlord_id, landlord_id))
+            elif tenant_idx == 2:
+                # Caretaker pending payment
+                cur.execute("""
+                    INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name)
+                    VALUES (?, ?, ?, date('now'), ?, 'M-Pesa', 'QKP90123M', ?, 'Caretaker collection via phone', 'pending', ?, 'Samson Njoroge (Caretaker)');
+                """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent, current_month, caretaker_id))
+            elif tenant_idx == 3:
+                # Partial payment (leaves arrears!)
+                cur.execute("""
+                    INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name, approved_by, approved_at)
+                    VALUES (?, ?, ?, date('now', '-5 days'), ?, 'Cash', 'CSH-0021', ?, 'Partial rent, promises balance by 15th', 'approved', ?, 'David Kimani (Landlord)', ?, datetime('now'));
+                """, (str(uuid.uuid4()), unit_id, tenant_id, max(1000, monthly_rent - 5000), current_month, landlord_id, landlord_id))
+            elif tenant_idx % 2 == 0:
+                # Approved payment
+                ref_code = f"QKX{tenant_idx:02d}920"
+                cur.execute("""
+                    INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name, approved_by, approved_at)
+                    VALUES (?, ?, ?, date('now', '-3 days'), ?, 'M-Pesa', ?, ?, 'Rent paid via Till', 'approved', ?, 'David Kimani (Landlord)', ?, datetime('now'));
+                """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent, ref_code, current_month, landlord_id, landlord_id))
 
     # Standard compound expenses
     cur.execute("""
