@@ -288,9 +288,57 @@ def seed_default_demo_data(con):
 
     con.commit()
 
+def compute_mockup_unit_name(fl, u_num, global_seq, scheme='scheme1', ground='G'):
+    floor_letters = ['A', 'B', 'C', 'D', 'E', 'F', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T']
+
+    if scheme == 'scheme2':
+        # 100-series: Ground -> 1..9 or G1..G9, 1st -> 101..109, 2nd -> 201..209
+        if fl == 0:
+            if ground == 'G': return f"G{u_num}"
+            elif ground == 'GF': return f"GF{u_num}"
+            elif ground == 'Ground': return f"Ground {u_num}"
+            else: return f"{u_num}"
+        else:
+            return f"{fl * 100 + u_num}"
+
+    elif scheme == 'scheme3':
+        # Pure Sequential: 1, 2, 3...
+        return f"{global_seq}"
+
+    elif scheme == 'scheme4':
+        # Floor label + Unit Letter: GA..GI, 1A..1I, 2A..2I...
+        u_letter = chr(64 + u_num) if u_num <= 26 else f"{u_num}"
+        if fl == 0:
+            fl_prefix = 'Ground ' if ground == 'Ground' else ('GF' if ground == 'GF' else ('A' if ground == 'Letter' else 'G'))
+        else:
+            fl_prefix = f"{fl}"
+        return f"{fl_prefix}{u_letter}"
+
+    elif scheme == 'scheme5':
+        # Word prefix: House 1..N
+        return f"House {global_seq}"
+
+    else:
+        # Default scheme1: Floor letters
+        # Ground: G1..G9 (or A1..A9), 1st: A1..A9 (or B1..B9)
+        if fl == 0:
+            if ground == 'Letter':
+                prefix = 'A'
+            elif ground == 'Ground':
+                prefix = 'Ground '
+            elif ground == 'GF':
+                prefix = 'GF'
+            else:
+                prefix = 'G'
+        else:
+            idx = fl if ground == 'Letter' else fl - 1
+            prefix = floor_letters[idx % len(floor_letters)]
+        return f"{prefix}{u_num}"
+
 def seed_custom_mockup(client_name="James Kariuki", property_name="Parkview Apartments",
-                       location="Ruaka, Kiambu Road", floors=3, units_per_floor=4, monthly_rent=22000):
-    """Generates a complete, tailored mockup building for a client pitch"""
+                       location="Ruaka, Kiambu Road", floors=3, units_per_floor=4, monthly_rent=22000,
+                       naming_scheme="scheme1", ground_convention="G"):
+    """Generates a complete, tailored mockup building for a client pitch with Kenyan naming format"""
     con = get_connection()
     cur = con.cursor()
 
@@ -320,38 +368,38 @@ def seed_custom_mockup(client_name="James Kariuki", property_name="Parkview Apar
     prop_id = str(uuid.uuid4())
     cur.execute("""
         INSERT INTO properties (id, name, location, floors, units_per_floor, blocks, naming_scheme, owner_id, created_by)
-        VALUES (?, ?, ?, ?, ?, '[]', 'scheme1', ?, ?);
-    """, (prop_id, property_name, location, floors, units_per_floor, landlord_id, landlord_id))
+        VALUES (?, ?, ?, ?, ?, '[]', ?, ?, ?);
+    """, (prop_id, property_name, location, floors, units_per_floor, naming_scheme, landlord_id, landlord_id))
 
-    # Kenyan tenant names sample pool
-    kenyan_names = [
-        ("Peter Kamau", "0722100201", "28391021"),
-        ("Mary Wanjiku", "0721334455", "30192847"),
-        ("Brian Omondi", "0711998877", "29182736"),
-        ("Faith Chebet", "0700554433", "33281940"),
-        ("John Mwangi", "0723445566", "27182930"),
-        ("Esther Njeri", "0712887766", "31928374"),
-        ("Kevin Kiprono", "0714990011", "28910293"),
-        ("Lilian Atieno", "0728334411", "30918274"),
-        ("Daniel Mutua", "0741223344", "26192837"),
-        ("Mercy Wambui", "0720889900", "32918273"),
-        ("Emmanuel Kipchumba", "0715667788", "29817263"),
-        ("Ruth Achieng", "0724112299", "31283746"),
+    # Dynamic pool of authentic Kenyan names
+    first_names = [
+        "Peter", "Mary", "Brian", "Faith", "John", "Esther", "Kevin", "Lilian",
+        "Daniel", "Mercy", "Emmanuel", "Ruth", "Dennis", "Grace", "Samson",
+        "Catherine", "George", "Beatrice", "Kennedy", "Sarah", "Paul", "Eunice",
+        "David", "Lucy", "Victor", "Jane", "James", "Joyce", "Patrick", "Hellen",
+        "Joseph", "Naomi", "Francis", "Alice", "Stephen", "Caroline", "Martin", "Rose"
+    ]
+    last_names = [
+        "Kamau", "Wanjiku", "Omondi", "Chebet", "Mwangi", "Njeri", "Kiprono", "Atieno",
+        "Mutua", "Wambui", "Kipchumba", "Achieng", "Kiprop", "Nyambura", "Ochieng",
+        "Kariuki", "Kimani", "Wafula", "Odhiambo", "Cheruiyot", "Barasa", "Nekesa",
+        "Muthoni", "Maina", "Kiptoo", "Koech", "Juma", "Hassan", "Ndungu", "Githinji",
+        "Ouma", "Wairimu", "Njoroge", "Kibet", "Mogaka", "Wamalwa", "Otieno", "Makau"
     ]
 
-    floor_letters = ['A', 'B', 'C', 'D', 'E', 'F']
     current_month = datetime.now().strftime("%Y-%m")
     
     tenant_idx = 0
     total_units_created = 0
 
     for fl in range(floors):
-        prefix = floor_letters[fl] if fl < len(floor_letters) else f"F{fl}"
         for u_num in range(1, units_per_floor + 1):
+            total_units_created += 1
             unit_id = str(uuid.uuid4())
-            unit_name = f"{prefix}{u_num}"
-            # 85% occupancy: leave 1 or 2 vacant
-            is_occupied = (total_units_created % 5 != 3)
+            unit_name = compute_mockup_unit_name(fl, u_num, total_units_created, scheme=naming_scheme, ground=ground_convention)
+            
+            # ~85% occupancy: leave every 6th or 7th unit vacant
+            is_occupied = (total_units_created % 6 != 0)
             status = 'occupied' if is_occupied else 'vacant'
             
             cur.execute("""
@@ -359,17 +407,22 @@ def seed_custom_mockup(client_name="James Kariuki", property_name="Parkview Apar
                 VALUES (?, ?, ?, ?, ?, ?, ?);
             """, (unit_id, prop_id, fl, unit_name, monthly_rent, status, f"Floor {fl} unit"))
 
-            if is_occupied and tenant_idx < len(kenyan_names):
-                name, phone, id_num = kenyan_names[tenant_idx]
+            if is_occupied:
+                fname = first_names[tenant_idx % len(first_names)]
+                lname = last_names[(tenant_idx * 3 + 1) % len(last_names)]
+                tenant_name = f"{fname} {lname}"
+                phone_num = f"07{20 + (tenant_idx % 70):02d}{100000 + (tenant_idx * 3421) % 900000}"
+                id_num = f"{27000000 + (tenant_idx * 13245) % 9000000}"
+                
                 tenant_idx += 1
                 tenant_id = str(uuid.uuid4())
 
                 cur.execute("""
                     INSERT INTO tenants (id, unit_id, full_name, phone, id_number, move_in_date, deposit_paid, rent_due_day)
                     VALUES (?, ?, ?, ?, ?, '2026-06-01', ?, 5);
-                """, (tenant_id, unit_id, name, phone, id_num, monthly_rent))
+                """, (tenant_id, unit_id, tenant_name, phone_num, id_num, monthly_rent))
 
-                # Payments: some paid in full, one partial, one pending
+                # Payments: realistic mix of approved, pending caretaker, and partial with arrears
                 if tenant_idx == 1:
                     # Paid full M-Pesa
                     cur.execute("""
@@ -387,15 +440,14 @@ def seed_custom_mockup(client_name="James Kariuki", property_name="Parkview Apar
                     cur.execute("""
                         INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name, approved_by, approved_at)
                         VALUES (?, ?, ?, date('now', '-5 days'), ?, 'Cash', 'CSH-0021', ?, 'Partial rent, promises balance by 15th', 'approved', ?, 'David Kimani (Landlord)', ?, datetime('now'));
-                    """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent - 5000, current_month, landlord_id, landlord_id))
+                    """, (str(uuid.uuid4()), unit_id, tenant_id, max(1000, monthly_rent - 5000), current_month, landlord_id, landlord_id))
                 elif tenant_idx % 2 == 0:
                     # Approved payment
+                    ref_code = f"QKX{tenant_idx:02d}920"
                     cur.execute("""
                         INSERT INTO payments (id, unit_id, tenant_id, date, amount, method, reference, covers_month, note, status, recorded_by, recorder_name, approved_by, approved_at)
                         VALUES (?, ?, ?, date('now', '-3 days'), ?, 'M-Pesa', ?, ?, 'Rent paid via Till', 'approved', ?, 'David Kimani (Landlord)', ?, datetime('now'));
-                    """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent, f"QKX{total_units_created}920", current_month, landlord_id, landlord_id))
-
-            total_units_created += 1
+                    """, (str(uuid.uuid4()), unit_id, tenant_id, monthly_rent, ref_code, current_month, landlord_id, landlord_id))
 
     # Standard compound expenses
     cur.execute("""

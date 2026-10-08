@@ -86,7 +86,7 @@ class RentBookApiHandler(BaseHTTPRequestHandler):
 
             # 3. Full Sync Pull (all tables in one call)
             elif path == "/api/sync/pull":
-                cur.execute("SELECT * FROM properties WHERE deleted_at IS NULL OR deleted_at = '' ORDER BY created_at DESC;")
+                cur.execute("SELECT * FROM properties ORDER BY created_at DESC;")
                 properties = [dict(r) for r in cur.fetchall()]
 
                 cur.execute("SELECT * FROM units ORDER BY floor_number ASC, name ASC;")
@@ -194,6 +194,8 @@ class RentBookApiHandler(BaseHTTPRequestHandler):
                 floors = int(body.get("floors", 3))
                 units_per_floor = int(body.get("unitsPerFloor", 4))
                 monthly_rent = float(body.get("monthlyRent", 22000))
+                naming_scheme = body.get("namingScheme", "scheme1")
+                ground_convention = body.get("groundConvention", "G")
 
                 result = db.seed_custom_mockup(
                     client_name=client_name,
@@ -201,7 +203,9 @@ class RentBookApiHandler(BaseHTTPRequestHandler):
                     location=location,
                     floors=floors,
                     units_per_floor=units_per_floor,
-                    monthly_rent=monthly_rent
+                    monthly_rent=monthly_rent,
+                    naming_scheme=naming_scheme,
+                    ground_convention=ground_convention
                 )
                 return self.send_json(result)
 

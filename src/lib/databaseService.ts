@@ -23,6 +23,8 @@ export interface ClientMockupConfig {
   floors: number;
   unitsPerFloor: number;
   monthlyRent: number;
+  namingScheme?: string;
+  groundConvention?: string;
 }
 
 const API_BASE = '/api';
